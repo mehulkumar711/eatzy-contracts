@@ -28,7 +28,3 @@ resource "google_project_iam_custom_role" "cloud_build_ci_role" {
     "artifactregistry.repositories.write"
   ]
 }
-
-output "role_id" {
-  value = google_project_iam_custom_role.cloud_build_ci_role.id
-}
