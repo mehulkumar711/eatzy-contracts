@@ -11,7 +11,6 @@ lint:
     - IMPORT_UNUSED
     - RPC_REQUEST_STANDARD_NAME
     - RPC_RESPONSE_STANDARD_NAME
-# Patched: Add breaking change detection
 breaking:
   use:
     - FILE
