@@ -1,0 +1,48 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          release-type: simple
+          package-name: eatzy-contracts
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      # Patched: Upload SBOM and Provenance as release assets
+      - name: Download Artifacts from GCS
+        if: ${{ steps.release.outputs.release_created }}
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY_GCS }}'
+      - run: |
+          # This assumes the SBOM was built and uploaded by Cloud Build
+          # We're just downloading it to attach to the release
+          gsutil cp gs://eatzy-artifacts/sbom/sbom.json .
+          gsutil cp gs://eatzy-artifacts/sbom/provenance.json .
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Upload SBOM to Release
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ./sbom.json
+          asset_name: cyclone-dx-sbom.json
+          asset_content_type: application/json
+          
+      - name: Upload Provenance to Release
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url }}
+          asset_path: ./provenance.json
+          asset_name: slsa-provenance.json
+          asset_content_type: application/json

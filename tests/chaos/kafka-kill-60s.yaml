@@ -1,0 +1,16 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: kafka-broker-kill-nightly
+  namespace: chaos-testing
+spec:
+  action: pod-kill
+  mode: one
+  duration: "60s" # Kill one pod for 60 seconds
+  selector:
+    namespaces:
+      - kafka
+    labelSelectors:
+      "app.kubernetes.io/name": "kafka" # Target Kafka brokers
+  scheduler:
+    cron: "@nightly" # This is redundant (GH action is cron), but good practice

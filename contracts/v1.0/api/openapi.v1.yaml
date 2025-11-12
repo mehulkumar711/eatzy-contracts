@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: "Eatzy API v1.0"
+  description: "Hardened v1.0 API contract for the Eatzy ecosystem. Includes idempotency and saga support."
+  version: "1.0.0"
+  contact:
+    name: "Eatzy Engineering"
+    email: "dev@eatzy.com"
+
+servers:
+  - url: "https://api.eatzy.com/api/v1"
+    description: Production Server
+
+paths:
+  /orders:
+    post:
+      tags: [Order]
+      summary: "Customer: Create a new order (Idempotent)"
+      description: "Creates a new order and starts the asynchronous saga. A unique `client_request_id` MUST be provided."
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderDto"
+      responses:
+        '202':
+          description: "Order accepted for processing. Client should now use payment_intent_id."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSagaPending"
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: "Duplicate request (idempotency key collision). Returns the existing order status."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSagaPending"
+        'default': { $ref: '#/components/responses/DefaultError' }
+
+  /sagas/order/{orderId}/status:
+    get:
+      tags: [Order, Saga]
+      summary: "Debug: Get the current status of the order saga"
+      description: "Provides observability into the saga state machine for a specific order."
+      operationId: getSagaStatus
+      security:
+        - BearerAuth: [] # Should be admin-only
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: "Saga state"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SagaStatus"
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        'default': { $ref: '#/components/responses/DefaultError' }
+
+  # ... (Add all other paths here: /auth, /catalog, etc.) ...
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    DefaultError:
+      description: Unexpected error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    BadRequest:
+      description: Bad Request (e.g., validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized (e.g., invalid JWT)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "ORDER_VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Vendor ID is required."
+        details:
+          type: object
+          # Patched: Add nullable and example
+          nullable: true
+          example: { "field": "otp" }
+
+    CreateOrderDto:
+      type: object
+      required: [client_request_id, vendor_id, items]
+      properties:
+        client_request_id:
+          type: string
+          format: uuid
+          description: "Client-supplied idempotency key. MUST be unique."
+          example: "a8f6b7c2-9f0e-4b7d-8b6f-4e6f1a4d9c8e"
+        vendor_id: { type: string, format: uuid, example: "b8f6b7c2-9f0e-4b7d-8b6f-4e6f1a4d9c8e" }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id: { type: string, example: "item-pav-bhaji" }
+              quantity: { type: integer, example: 2 }
+
+    OrderSagaPending:
+      type: object
+      properties:
+        order_id: { type: string, format: uuid, example: "c8f6b7c2-9f0e-4b7d-8b6f-4e6f1a4d9c8e" }
+        saga_id: { type: string, format: uuid, example: "d8f6b7c2-9f0e-4b7d-8b6f-4e6f1a4d9c8e" }
+        status: { type: string, example: "PENDING" }
+        payment_intent_id: { type: string, example: "pi_12345" }
+
+    SagaStatus:
+      type: object
+      properties:
+        order_id: { type: string, format: uuid, example: "c8f6b7c2-9f0e-4b7d-8b6f-4e6f1a4d9c8e" }
+        current_step: { type: string, example: "AWAITING_PAYMENT" }
+        is_complete: { type: boolean, example: false }
+        is_failed: { type: boolean, example: false }
+        last_error: { type: string, nullable: true, example: "Payment gateway timeout" }
+        compensations_pending: { type: array, items: { type: string }, example: ["REFUND_PAYMENT"] }

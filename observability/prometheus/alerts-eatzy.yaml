@@ -1,0 +1,44 @@
+groups:
+- name: eatzy-critical-alerts
+  rules:
+  - alert: OrderSagaFailureRateHigh
+    # Patched: Add 'or vector(0)' and 'or vector(1)' to prevent NaN on divide-by-zero
+    expr: |
+      (rate(order_saga_failure_total[5m]) or vector(0))
+      /
+      (rate(order_saga_started_total[5m]) or vector(1)) > 0.005
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "High order saga failure rate (>0.5%)"
+
+  - alert: KafkaConsumerLagHigh
+    # SRE must validate {consumergroup} label. May be {group}.
+    expr: sum(kafka_consumergroup_lag{consumergroup=~".*notification-service.*"}) by (consumergroup) > 100
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Notification service Kafka lag is high"
+
+  - alert: KafkaDLQMessagesExist
+    # Patched: Use increase() to fire only on *new* messages, not the total
+    expr: increase(kafka_topic_partition_messages{topic="eatzy-dlq-topic"}[5m]) > 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "New messages are in the Dead Letter Queue (DLQ)"
+
+  - alert: STTFalsePositiveRateHigh
+    # Patched: Use a ratio (increase/increase) instead of an absolute rate
+    expr: |
+      (increase(stt_false_positive_total[5m]) or vector(0)) 
+      / 
+      (increase(stt_detection_total[5m]) or vector(1)) > 0.01
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "STT false positive rate is high (>1%)"

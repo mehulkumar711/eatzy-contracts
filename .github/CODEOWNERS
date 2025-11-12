@@ -1,0 +1,13 @@
+# All changes to main require a review from the core team
+* @mehulkumar711
+
+# Contract changes require platform owner review
+/contracts/v1.0/ @mehulkumar711
+
+# DB migrations require DB owner review
+/db/migrations/ @mehulkumar711
+
+# CI/CD and Infra changes require DevOps review
+/ci/ @mehulkumar711
+/infra/ @mehulkumar711
+/.github/ @mehulkumar711

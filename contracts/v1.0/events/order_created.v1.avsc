@@ -1,0 +1,47 @@
+{
+  "type": "record",
+  "namespace": "com.eatzy.events.v1",
+  "name": "OrderCreated",
+  "doc": "Order created event. Compatibility: FULL (new fields optional with defaults).",
+  "fields": [
+    {
+      "name": "metadata",
+      "type": {
+        "type": "record",
+        "name": "EventMetadata",
+        "fields": [
+          { "name": "event_id", "type": "string", "doc": "UUID for consumer idempotency" },
+          { "name": "timestamp", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+          { "name": "source_service", "type": "string", "default": "order-service" }
+        ]
+      }
+    },
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "OrderPayload",
+        "fields": [
+          { "name": "order_id", "type": "string" },
+          { "name": "user_id", "type": "string" },
+          { "name": "vendor_id", "type": "string" },
+          { "name": "total_amount_paise", "type": "long" },
+          {
+            "name": "items",
+            "type": {
+              "type": "array",
+              "items": {
+                "type": "record",
+                "name": "OrderItem",
+                "fields": [
+                  { "name": "item_id", "type": "string" },
+                  { "name": "quantity", "type": "int" }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+name: Nightly Chaos Run
+
+on:
+  schedule:
+    # Runs at 01:00 UTC every night
+    - cron: '0 1 * * *'
+
+jobs:
+  run-chaos-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: GCloud Auth (k8s)
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY_K8S }}'
+          
+      - name: Set up gcloud SDK
+        uses: 'google-github-actions/setup-gcloud@v2'
+      
+      - name: Get GKE Credentials
+        run: gcloud container clusters get-credentials eatzy-staging-cluster --region asia-south1
+      
+      # Step 1: Install/Update Chaos Mesh (Pinned Version)
+      - name: Install Chaos Mesh
+        run: |
+          helm repo add chaos-mesh https://charts.chaos-mesh.org
+          helm repo update
+          helm upgrade --install chaos-mesh chaos-mesh/chaos-mesh \
+            --version 2.6.3 \
+            --namespace=chaos-testing --create-namespace \
+            --set chaosDaemon.runtime=containerd \
+            --set chaosDaemon.socketPath=/run/containerd/containerd.sock \
+            --wait
+            
+      # Step 2: Apply Kafka Kill Experiment
+      - name: Inject Chaos (Kafka Kill)
+        run: |
+          kubectl apply -f tests/chaos/kafka-kill-60s.yaml
+          echo "Chaos injected. Waiting 30s for experiment to be running..."
+          timeout 60s bash -c 'until kubectl get podchaos kafka-broker-kill-nightly -n chaos-testing -o json | jq -e ".status.experiment.phase == \"Running\""; do echo "Waiting for chaos to start..."; sleep 5; done'
+          echo "Chaos is Running. Waiting 90s for experiment to finish and system to recover..."
+          sleep 90
+          
+      # Step 3: Run k6 smoke tests
+      - name: Run k6 Smoke Test
+        uses: k6io/k6-action@v0.2.0
+        with:
+          script-file: tests/k6/order_flow_test.js
+          environment-variables: |
+            BASE_URL=https://api.staging.eatzy.com
+            TEST_TOKEN=${{ secrets.STAGING_TEST_TOKEN }}
+
+      # Step 4: Check Prometheus Alerts (with retry)
+      - name: Check for Critical Alerts
+        run: |
+          echo "Querying Prometheus for active critical alerts..."
+          PROM_URL="http://prometheus.monitoring.svc.cluster.local:9090/api/v1" # K8s service DNS
+          QUERY_URL="${PROM_URL}/query?query=ALERTS{alertstate=%22firing%22,severity=%22critical%22}"
+          
+          for i in {1..5}; do
+            ALERTS=$(curl -s -G "${QUERY_URL}")
+            if [ $? -eq 0 ]; then
+              echo "Prometheus query successful."
+              break
+            fi
+            echo "Prometheus query failed, retrying in 10s..."
+            sleep 10
+          done
+          
+          echo "Active Alerts: ${ALERTS}"
+          
+          if [ $(echo "${ALERTS}" | jq '.data.result | length') -gt 0 ]; then
+            echo "::error::Critical alerts are firing after chaos test!"
+            exit 1
+          else
+            echo "Success: Zero critical alerts found."
+          fi

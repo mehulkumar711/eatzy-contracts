@@ -1,0 +1,11 @@
+{
+  "name": "eatzy-contracts-v1.6",
+  "version": "1.6.0",
+  "private": true,
+  "scripts": {
+    "spectral:lint": "spectral lint"
+  },
+  "devDependencies": {
+    "@stoplight/spectral-cli": "6.11.0"
+  }
+}
