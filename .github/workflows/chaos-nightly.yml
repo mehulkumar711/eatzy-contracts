@@ -44,20 +44,27 @@ jobs:
           echo "Chaos is Running. Waiting 90s for experiment to finish and system to recover..."
           sleep 90
           
-      # Step 3: Run k6 smoke tests
+      # Step 3: Run k6 smoke tests (FIXED SYNTAX)
       - name: Run k6 Smoke Test
-        uses: k6io/k6-action@v0.2.0
+        uses: grafana/k6-action@v0.3.1
         with:
-          script-file: tests/k6/order_flow_test.js
-          environment-variables: |
-            BASE_URL=https://api.staging.eatzy.com
-            TEST_TOKEN=${{ secrets.STAGING_TEST_TOKEN }}
+          filename: tests/k6/order_flow_test.js
+        env:
+          BASE_URL: https://api.staging.eatzy.com
+          TEST_TOKEN: ${{ secrets.STAGING_TEST_TOKEN }}
 
       # Step 4: Check Prometheus Alerts (with retry)
       - name: Check for Critical Alerts
         run: |
           echo "Querying Prometheus for active critical alerts..."
-          PROM_URL="http://prometheus.monitoring.svc.cluster.local:9090/api/v1" # K8s service DNS
+          # Assuming Prometheus is exposed via K8s service DNS within the cluster context or port-forwarded
+          # For CI, we usually need to port-forward if not exposed publicly
+          # This is a placeholder for the connectivity strategy:
+          kubectl port-forward svc/prometheus-operated -n monitoring 9090:9090 &
+          PID=$!
+          sleep 5
+          
+          PROM_URL="http://localhost:9090/api/v1"
           QUERY_URL="${PROM_URL}/query?query=ALERTS{alertstate=%22firing%22,severity=%22critical%22}"
           
           for i in {1..5}; do
@@ -69,6 +76,8 @@ jobs:
             echo "Prometheus query failed, retrying in 10s..."
             sleep 10
           done
+          
+          kill $PID
           
           echo "Active Alerts: ${ALERTS}"
           
