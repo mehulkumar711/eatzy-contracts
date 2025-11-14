@@ -1,26 +1,13 @@
-import { Body, Controller, Post, Get, Param, ValidationPipe, UsePipes, HttpCode, UseGuards, Request } from '@nestjs/common';
-import { OrdersService } from './orders.service';
-import { CreateOrderDto } from './create-order.dto';
-import { JwtAuthGuard } from '../../auth-service/src/jwt-auth.guard';
-import { Roles } from '../../auth-service/src/roles.decorator';
-import { RolesGuard } from '../../auth-service/src/roles.guard';
+# Read the file
+$controllerContent = Get-Content -Path apps/order-service/src/orders/orders.controller.ts -Raw
 
-@Controller('api/v1/orders')
-@UseGuards(JwtAuthGuard, RolesGuard) // Patched: Add RolesGuard
-export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+# Replace the broken imports
+$controllerContent = $controllerContent -replace "from '@app/shared'", "from '@app/shared'"
+$controllerContent = $controllerContent -replace "from '@app/shared'", "from '@app/shared'"
+$controllerContent = $controllerContent -replace "from '@app/shared'", "from '@app/shared'"
 
-  @Post()
-  @HttpCode(202)
-  @Roles('customer') // Patched: Only 'customer' roles can create orders
-  @UsePipes(new ValidationPipe({ transform: true }))
-  async create(@Body() dto: CreateOrderDto, @Request() req: any) {
-    const user = req.user; 
-    return this.ordersService.createOrder(dto, user);
-  }
+# Replace multiple imports with one
+$controllerContent = $controllerContent -replace "import { JwtAuthGuard } from '@app/shared';(\r?\n)import { Roles } from '@app/shared';(\r?\n)import { RolesGuard } from '@app/shared';", "import { JwtAuthGuard, Roles, RolesGuard } from '@app/shared';"
 
-  @Get(':id/status')
-  async status(@Param('id') id: string) {
-    return this.ordersService.getStatus(id);
-  }
-}
+# Write the file back
+Set-Content -Path apps/order-service/src/orders/orders.controller.ts -Value $controllerContent

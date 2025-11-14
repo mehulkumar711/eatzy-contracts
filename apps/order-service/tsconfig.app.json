@@ -1,9 +1,16 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/apps/order-service",
-    "types": ["node"]
-  },
-  "include": ["src/**/*"],
-  "exclude": ["test/**/*.spec.ts"]
+    "extends":  "../../tsconfig.json",
+    "compilerOptions":  {
+                            "outDir":  "../../dist/apps/order-service",
+                            "types":  [
+                                          "node",
+                                          "jest"
+                                      ]
+                        },
+    "include":  [
+                    "src/**/*"
+                ],
+    "exclude":  [
+                    "test/**/*.spec.ts"
+                ]
 }
