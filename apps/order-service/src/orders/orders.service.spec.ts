@@ -59,7 +59,7 @@ describe('OrdersService', () => {
       total_amount_paise: 24000,
     };
     
-    const mockUser = { userId: 'customer-123', role: 'customer' };
+    const mockUser = { userId: 'customer-123', role: 'customer', phone: '+911234567890' };
 
     // Mock idempotency check (event not found)
     mockQueryRunner.manager.findOne.mockResolvedValueOnce(null); 
