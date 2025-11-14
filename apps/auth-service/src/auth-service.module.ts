@@ -8,13 +8,17 @@ import { JwtStrategy } from './jwt.strategy';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      // This line is the critical fix.
+      // It tells Nest to load the .env file from this app's directory.
+      envFilePath: 'apps/auth-service/.env',
+    }),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
-        // We will add this to a .env file next
-        secret: configService.get<string>('JWT_SECRET', 'YOUR_SUPER_SECRET_KEY_32_CHARS_LONG'),
+        secret: configService.get<string>('JWT_SECRET'), // Reads from .env
         signOptions: {
           expiresIn: '1d', // Token expires in 1 day
         },
