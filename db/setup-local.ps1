@@ -1,20 +1,15 @@
 $ErrorActionPreference = "Stop"
 
+Write-Host "0. Destroying old database volumes (Hard Reset)..."
+docker-compose down --volumes
+
 Write-Host "1. Starting Docker containers..."
-# Try standard docker-compose, if fails try new 'docker compose'
-try {
-    docker-compose up -d
-} catch {
-    Write-Host "docker-compose not found, trying 'docker compose'..."
-    docker compose up -d
-}
+docker compose up -d
 
 Write-Host "2. Waiting for PostgreSQL to be ready..."
 $retries = 0
 do {
     Start-Sleep 2
-    # FIX: We pipe to Out-Null so we don't create an unused variable.
-    # We rely on $LASTEXITCODE to check success.
     docker exec eatzy_postgres pg_isready -U user -q | Out-Null
     $retries++
     Write-Host "." -NoNewline
