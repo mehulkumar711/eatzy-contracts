@@ -7,10 +7,12 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) return true;
-    
+    if (!requiredRoles) {
+      return true; // No roles required, allow access
+    }
     const { user } = context.switchToHttp().getRequest();
-    // Patched: Case-insensitive compare
+
+    // Case-insensitive compare
     return requiredRoles.some((role) => 
       user.role && user.role.toLowerCase() === role.toLowerCase()
     );

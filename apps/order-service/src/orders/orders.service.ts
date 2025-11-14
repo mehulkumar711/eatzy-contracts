@@ -6,20 +6,20 @@ import { CreateOrderDto } from './create-order.dto';
 import { Saga } from '../sagas/saga.entity';
 import { ProcessedEvents } from '../events/processed-events.entity';
 import { User } from '../users/user.entity';
+import { JwtPayload } from '@app/shared'; // Use shared lib path
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(Order) private orderRepo: Repository<Order>,
     @InjectRepository(Saga) private sagaRepo: Repository<Saga>,
-    @InjectRepository(User) private userRepo: Repository<User>, // Inject User
+    @InjectRepository(User) private userRepo: Repository<User>,
     private dataSource: DataSource,
   ) {}
 
-  async createOrder(dto: CreateOrderDto, user: any) {
+  async createOrder(dto: CreateOrderDto, user: JwtPayload) { // Patched: Use JwtPayload
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    // Patched: Use SERIALIZABLE to prevent race conditions
     await queryRunner.startTransaction('SERIALIZABLE'); 
 
     try {
@@ -48,7 +48,6 @@ export class OrdersService {
       // 1.5. VALIDATE CUSTOMER (Locked by Transaction)
       const customer = await queryRunner.manager.findOne(User, {
         where: { id: user.userId, role: 'customer', is_active: true },
-        // Patched: Lock the user row to prevent deactivation
         lock: { mode: 'pessimistic_write' }
       });
       if (!customer) {
