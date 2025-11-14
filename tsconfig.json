@@ -22,7 +22,9 @@
     "paths": {
       "@app/contracts/*": ["contracts/*"],
       "@app/auth/*": ["apps/auth-service/src/*"],
-      "@app/order/*": ["apps/order-service/src/*"]
+      "@app/order/*": ["apps/order-service/src/*"],
+      "@app/shared": ["libs/shared/src"],
+      "@app/shared/*": ["libs/shared/src/*"]
     }
   }
 }
