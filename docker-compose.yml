@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -8,10 +10,13 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: eatzy_db
+      # CRITICAL FIX → forces strong password auth at init time
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d eatzy_db"]
+      # Don't use -d eatzy_db (it may not exist yet)
+      test: ["CMD-SHELL", "pg_isready -U user"]
       interval: 5s
       timeout: 5s
       retries: 5
