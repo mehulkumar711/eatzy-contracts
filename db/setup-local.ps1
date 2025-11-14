@@ -14,7 +14,6 @@ Write-Host "2. Waiting for PostgreSQL to be ready..."
 $retries = 0
 $dbReady = $false
 
-# This is the retry loop you are missing
 do {
     Start-Sleep 2
     Write-Host "." -NoNewline
@@ -23,21 +22,30 @@ do {
     try {
         $status = docker inspect eatzy_postgres --format '{{.State.Status}}'
     } catch {
-         # Catch errors if container doesn't exist yet
+         # Container might not exist yet, just continue loop
     }
 
     if ($status -eq 'running') {
-        # Patched: Check against the default 'postgres' db
-        docker exec eatzy_postgres psql -U user -d postgres -c "SELECT 1;" 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            $dbReady = $true
-            break # Success
+        # This 'try...catch' is the NEW fix.
+        # It will catch the error and let the loop continue.
+        try {
+            # Run the command and silence all output streams
+            docker exec eatzy_postgres psql -U user -d postgres -c "SELECT 1;" 2>&1 | Out-Null
+
+            # If the command above succeeds, $LASTEXITCODE will be 0
+            if ($LASTEXITCODE -eq 0) {
+                $dbReady = $true
+                break # Success
+            }
+        } catch {
+            # Catch the "psql: error..." and do nothing.
+            # This allows the loop to continue retrying.
         }
     }
     $retries++
 } until ($retries -gt 30) # Wait for up to 60 seconds
 
-Write-Host "" # Newline after the dots
+Write-Host "" # Newline
 if ($dbReady -eq $false) { throw "PostgreSQL database 'postgres' never became ready (Timed out)." }
 
 Write-Host "3. Database 'postgres' is ready."
