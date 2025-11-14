@@ -17,29 +17,19 @@ $dbReady = $false
 do {
     Start-Sleep 2
     Write-Host "." -NoNewline
-
     $status = ""
-    try {
-        $status = docker inspect eatzy_postgres --format '{{.State.Status}}'
-    } catch {
-         # Container might not exist yet, just continue loop
-    }
+    try { $status = docker inspect eatzy_postgres --format '{{.State.Status}}' } catch {}
 
     if ($status -eq 'running') {
-        # This 'try...catch' is the NEW fix.
-        # It will catch the error and let the loop continue.
         try {
-            # Run the command and silence all output streams
+            # Try to connect to the default 'postgres' db
             docker exec eatzy_postgres psql -U user -d postgres -c "SELECT 1;" 2>&1 | Out-Null
-
-            # If the command above succeeds, $LASTEXITCODE will be 0
             if ($LASTEXITCODE -eq 0) {
                 $dbReady = $true
                 break # Success
             }
         } catch {
-            # Catch the "psql: error..." and do nothing.
-            # This allows the loop to continue retrying.
+            # Catch the "not ready" error and let the loop retry
         }
     }
     $retries++
@@ -49,6 +39,14 @@ Write-Host "" # Newline
 if ($dbReady -eq $false) { throw "PostgreSQL database 'postgres' never became ready (Timed out)." }
 
 Write-Host "3. Database 'postgres' is ready."
+
+# ----- THIS IS THE NEW FIX -----
+Write-Host "3b. Ensuring 'eatzy_db' database exists..."
+# We connect to 'postgres' db to create 'eatzy_db'
+# We add '2>$null | Out-Null' to ignore the error if the DB already exists
+docker exec eatzy_postgres psql -U user -d postgres -c "CREATE DATABASE eatzy_db" 2>$null | Out-Null
+# -------------------------------
+
 Write-Host "4. Running Migrations..."
 Get-Content db/migrations/V1__init_sagas_and_idempotency.sql | docker exec -i eatzy_postgres psql -U user -d eatzy_db
 Get-Content db/migrations/V2__create_core_schema.sql | docker exec -i eatzy_postgres psql -U user -d eatzy_db
