@@ -12,29 +12,25 @@ const MOCK_USERS = [
 export class AuthServiceService {
   constructor(private jwtService: JwtService) {}
 
-  /**
-   * MOCK LOGIN
-   * In a real app, this would verify a one-time-password (OTP).
-   * For v1, we just find the user by phone and return a token.
-   */
   async loginWithPhone(phone: string) {
-    // 1. Find the user
     const user = MOCK_USERS.find(u => u.phone === phone);
-
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    // 2. Create the JWT payload
     const payload = { 
       phone: user.phone, 
-      sub: user.userId, // 'sub' (subject) is the standard JWT claim for user ID
+      sub: user.userId,
       role: user.role 
     };
 
     // 3. Sign and return the token
     return {
-      accessToken: this.jwtService.sign(payload),
+      accessToken: this.jwtService.sign(payload, {
+        // Patched: Add audience and issuer
+        issuer: 'eatzy-auth-service',
+        audience: 'eatzy-app',
+      }),
     };
   }
 }

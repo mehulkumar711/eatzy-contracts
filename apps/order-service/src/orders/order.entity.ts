@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { User } from '../users/user.entity'; // Import User
 
 export enum OrderStatus {
   PENDING = 'pending',
@@ -16,6 +17,11 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  // Patched: Add FK relationship
+  @ManyToOne(() => User, { onDelete: 'SET NULL' }) // Or 'CASCADE'
+  @JoinColumn({ name: 'customer_id' })
+  customer: User;
+
   @Column({ type: 'uuid', name: 'customer_id' })
   customerId!: string;
 
@@ -23,7 +29,7 @@ export class Order {
   vendorId!: string;
 
   @Column({ type: 'uuid', name: 'rider_id', nullable: true })
-  riderId?: string; // Optional
+  riderId?: string;
 
   @Column({
     type: 'enum',

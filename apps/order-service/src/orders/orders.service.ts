@@ -1,31 +1,34 @@
-import { Injectable, NotFoundException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Order, OrderStatus } from './order.entity';
 import { CreateOrderDto } from './create-order.dto';
 import { Saga } from '../sagas/saga.entity';
 import { ProcessedEvents } from '../events/processed-events.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class OrdersService {
   constructor(
     @InjectRepository(Order) private orderRepo: Repository<Order>,
     @InjectRepository(Saga) private sagaRepo: Repository<Saga>,
+    @InjectRepository(User) private userRepo: Repository<User>, // Inject User
     private dataSource: DataSource,
   ) {}
 
-  async createOrder(dto: CreateOrderDto) {
+  async createOrder(dto: CreateOrderDto, user: any) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    await queryRunner.startTransaction();
+    // Patched: Use SERIALIZABLE to prevent race conditions
+    await queryRunner.startTransaction('SERIALIZABLE'); 
 
     try {
-      // 1. Check Idempotency
+      // 1. Check Idempotency (Locked by Transaction)
       const existingEvent = await queryRunner.manager.findOne(ProcessedEvents, {
         where: { 
           event_id: dto.client_request_id,
           consumer_group: 'order-service'
-        }
+        },
       });
 
       if (existingEvent) {
@@ -42,9 +45,19 @@ export class OrdersService {
         }
       }
 
+      // 1.5. VALIDATE CUSTOMER (Locked by Transaction)
+      const customer = await queryRunner.manager.findOne(User, {
+        where: { id: user.userId, role: 'customer', is_active: true },
+        // Patched: Lock the user row to prevent deactivation
+        lock: { mode: 'pessimistic_write' }
+      });
+      if (!customer) {
+        throw new UnauthorizedException('Invalid or inactive customer');
+      }
+
       // 2. Create Order
       const order = queryRunner.manager.create(Order, {
-        customerId: '11111111-1111-1111-1111-111111111111', // Mock for v1
+        customerId: user.userId, // Use real ID
         vendorId: dto.vendor_id,
         totalAmountPaise: dto.total_amount_paise,
         clientRequestId: dto.client_request_id,
@@ -79,7 +92,7 @@ export class OrdersService {
 
     } catch (err: any) {
       await queryRunner.rollbackTransaction();
-      if (err instanceof ConflictException) throw err;
+      if (err instanceof ConflictException || err instanceof UnauthorizedException) throw err;
       if (err.code === '23505') throw new ConflictException('Duplicate request detected during race condition');
       console.error(err);
       throw new InternalServerErrorException('Transaction failed');
