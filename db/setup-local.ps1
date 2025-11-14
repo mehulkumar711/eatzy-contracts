@@ -1,57 +1,49 @@
 $ErrorActionPreference = "Stop"
 
-Write-Host "0. Destroying old database (Hard Reset)..."
+Write-Host "========== EATZY LOCAL DATABASE SETUP (v1.8) =========="
+
+# 1. Hard Reset: Stop containers, remove volumes, nuke ./data
+Write-Host "`n[1/5] Destroying old database (Hard Reset)..."
 docker-compose down --volumes
 if (Test-Path -Path "./data") {
-    Write-Host "Nuking stale './data' folder..."
+    Write-Host "     Nuking stale './data' folder..."
     Remove-Item -Recurse -Force ./data
 }
 
-Write-Host "1. Starting Docker containers..."
+# 2. Start fresh containers
+Write-Host "`n[2/5] Starting Docker containers..."
 docker compose up -d
 
-Write-Host "2. Waiting for PostgreSQL to be ready..."
+# 3. Wait for PostgreSQL to be "healthy"
+Write-Host "`n[3/5] Waiting for PostgreSQL to be healthy..."
 $retries = 0
-$dbReady = $false
-
+$health = "starting"
 do {
     Start-Sleep 2
     Write-Host "." -NoNewline
-    $status = ""
-    try { $status = docker inspect eatzy_postgres --format '{{.State.Status}}' } catch {}
-
-    if ($status -eq 'running') {
-        try {
-            # Try to connect to the default 'postgres' db
-            docker exec eatzy_postgres psql -U user -d postgres -c "SELECT 1;" 2>&1 | Out-Null
-            if ($LASTEXITCODE -eq 0) {
-                $dbReady = $true
-                break # Success
-            }
-        } catch {
-            # Catch the "not ready" error and let the loop retry
-        }
-    }
+    
+    # This command reads the "healthcheck" status from docker-compose.yml
+    $health = docker inspect eatzy_postgres --format '{{.State.Health.Status}}'
     $retries++
-} until ($retries -gt 30) # Wait for up to 60 seconds
+} until ($health -eq 'healthy' -or $retries -gt 30)
 
-Write-Host "" # Newline
-if ($dbReady -eq $false) { throw "PostgreSQL database 'postgres' never became ready (Timed out)." }
+Write-Host "" # New line
+if ($health -ne 'healthy') { 
+    Write-Host "❌ FATAL: PostgreSQL container failed to become healthy."
+    Write-Host "Run 'docker logs eatzy_postgres' to see the error."
+    throw "PostgreSQL health check failed." 
+}
 
-Write-Host "3. Database 'postgres' is ready."
+Write-Host "     ✅ Database 'eatzy_db' is ready."
 
-# ----- THIS IS THE NEW FIX -----
-Write-Host "3b. Ensuring 'eatzy_db' database exists..."
-# We connect to 'postgres' db to create 'eatzy_db'
-# We add '2>$null | Out-Null' to ignore the error if the DB already exists
-docker exec eatzy_postgres psql -U user -d postgres -c "CREATE DATABASE eatzy_db" 2>$null | Out-Null
-# -------------------------------
-
-Write-Host "4. Running Migrations..."
+# 4. Run Migrations (PowerShell-safe)
+Write-Host "`n[4/5] Running Migrations..."
 Get-Content db/migrations/V1__init_sagas_and_idempotency.sql | docker exec -i eatzy_postgres psql -U user -d eatzy_db
 Get-Content db/migrations/V2__create_core_schema.sql | docker exec -i eatzy_postgres psql -U user -d eatzy_db
 
-Write-Host "5. Seeding Data..."
+# 5. Seed Data (PowerShell-safe)
+Write-Host "`n[5/5] Seeding Data..."
 Get-Content db/seed.sql | docker exec -i eatzy_postgres psql -U user -d eatzy_db
 
-Write-Host "✅ Local Environment Ready!"
+Write-Host "`n🎉 LOCAL ENVIRONMENT READY!"
+Write-Host "==============================================="
