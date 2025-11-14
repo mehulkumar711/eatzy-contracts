@@ -17,16 +17,20 @@ do {
     Start-Sleep 2
     Write-Host "." -NoNewline
     
-    # Check if container is running
-    $status = docker inspect eatzy_postgres --format '{{.State.Status}}'
-    if ($status -eq 'running') {
-        # If running, check if 'eatzy_db' is ready
-        docker exec eatzy_postgres psql -U user -d eatzy_db -c "SELECT 1;" 2>$null | Out-Null
+    try {
+        # We try to run the command. We don't care about output, only success.
+        docker exec eatzy_postgres psql -U user -d eatzy_db -c "SELECT 1;" | Out-Null
+        
+        # If the command above fails, it throws an error.
+        # If it succeeds, $LASTEXITCODE will be 0.
         if ($LASTEXITCODE -eq 0) {
             $dbReady = $true
             break # Success
         }
+    } catch {
+        # psql failed (e..g, db not ready), we catch the error and let the loop continue
     }
+    
     $retries++
 } until ($retries -gt 30)
 
