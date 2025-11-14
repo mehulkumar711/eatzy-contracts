@@ -27,3 +27,6 @@ gitleaks-report.json
 .terraform/
 *.tfstate
 *.tfstate.backup
+
+# Local docker data
+data/
