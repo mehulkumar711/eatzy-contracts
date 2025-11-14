@@ -2,7 +2,7 @@ name: Appium FTL CI
 
 on:
   workflow_run:
-    workflows: ["Android Build"] # Triggered after a separate build job
+    workflows: ["Android Build"] # Triggered after the build job
     types:
       - completed
 
@@ -25,7 +25,7 @@ jobs:
       - name: GCloud Auth
         uses: 'google-github-actions/auth@v2'
         with:
-          credentials_json: '${{ secrets.GCP_SA_KEY_FTL }}' # Separate SA key for FTL
+          credentials_json: '${{ secrets.GCP_SA_KEY_FTL }}'
           
       - name: Set up gcloud SDK
         uses: 'google-github-actions/setup-gcloud@v2'
@@ -57,7 +57,6 @@ jobs:
             --results-bucket=gs://eatzy-ftl-results \
             --results-dir=ftl-results/${{ github.sha }}/${{ matrix.device }}
       
-      # This step fails the PR if the gcloud command fails
       - name: Check FTL Results
         if: failure()
         run: |

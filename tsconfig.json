@@ -17,12 +17,12 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    
     "useDefineForClassFields": false,
     "strictPropertyInitialization": false,
-    
     "paths": {
-      "@app/contracts/*": ["contracts/*"]
+      "@app/contracts/*": [
+        "contracts/*"
+      ]
     }
   }
 }
