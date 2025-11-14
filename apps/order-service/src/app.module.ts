@@ -1,29 +1,35 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OrdersModule } from './orders/orders.module';
+import { AuthServiceModule } from 'apps/auth-service/src/auth-service.module';
 
 @Module({
   imports: [
-    // 1. Load .env
+    // Patched: Load the service-local .env file
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: 'apps/order-service/.env',
     }),
 
-    // 2. Connect to DB
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT, 10) || 5432,
-      username: process.env.DB_USER || 'user',
-      password: process.env.DB_PASSWORD || 'password',
-      database: process.env.DB_NAME || 'eatzy_db',
-      autoLoadEntities: true,
-      synchronize: false, // We use migrations
+    // Patched: Use ConfigService to inject credentials
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.getOrThrow<string>('DB_HOST'),
+        port: configService.getOrThrow<number>('DB_PORT'),
+        username: configService.getOrThrow<string>('DB_USER'),
+        password: configService.getOrThrow<string>('DB_PASSWORD'),
+        database: configService.getOrThrow<string>('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: false, // We use migrations
+      }),
     }),
-
-    // 3. Import Feature Modules
+    
     OrdersModule,
+    AuthServiceModule,
   ],
   controllers: [],
   providers: [],
