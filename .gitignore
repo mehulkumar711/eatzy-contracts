@@ -30,6 +30,3 @@ gitleaks-report.json
 
 # Local docker data
 data/
-
-# Local docker data
-data/
