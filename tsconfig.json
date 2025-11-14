@@ -20,9 +20,9 @@
     "useDefineForClassFields": false,
     "strictPropertyInitialization": false,
     "paths": {
-      "@app/contracts/*": [
-        "contracts/*"
-      ]
+      "@app/contracts/*": ["contracts/*"],
+      "@app/auth/*": ["apps/auth-service/src/*"],
+      "@app/order/*": ["apps/order-service/src/*"]
     }
   }
 }

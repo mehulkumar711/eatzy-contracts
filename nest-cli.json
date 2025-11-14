@@ -1,12 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/eatzy-backend/src",
   "monorepo": true,
   "root": "apps/order-service",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/eatzy-backend/tsconfig.app.json"
+    "tsConfigPath": "apps/order-service/tsconfig.app.json"
   },
   "projects": {
     "order-service": {
