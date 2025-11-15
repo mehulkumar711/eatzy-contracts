@@ -9,7 +9,7 @@ const MOCK_USERS = [
 ];
 
 @Injectable()
-export class AuthServiceService {
+export class AuthService {
   constructor(private jwtService: JwtService) {}
 
   async loginWithPhone(phone: string) {

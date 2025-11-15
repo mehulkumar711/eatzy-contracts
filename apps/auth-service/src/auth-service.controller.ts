@@ -1,5 +1,5 @@
 import { Controller, Post, Body, ValidationPipe, UsePipes } from '@nestjs/common';
-import { AuthServiceService } from './auth-service.service';
+import { AuthService } from './auth-service.service';
 
 // We need a DTO (Data Transfer Object) for validation
 class LoginDto {
@@ -8,7 +8,7 @@ class LoginDto {
 
 @Controller('api/v1/auth')
 export class AuthServiceController {
-  constructor(private readonly authServiceService: AuthServiceService) {}
+  constructor(private readonly authServiceService: AuthService) {}
 
   @Post('login')
   @UsePipes(new ValidationPipe())
