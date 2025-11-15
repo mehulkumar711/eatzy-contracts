@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OrdersModule } from './orders/orders.module';
-import { AuthServiceModule } from 'apps/auth-service/src/auth-service.module';
+// DO NOT import AuthServiceModule. It's a separate microservice.
+// import { AuthServiceModule } from 'apps/auth-service/src/auth-service.module';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { AuthServiceModule } from 'apps/auth-service/src/auth-service.module';
     }),
     
     OrdersModule,
-    AuthServiceModule,
+    // AuthServiceModule, <-- THIS LINE MUST BE DELETED
   ],
   controllers: [],
   providers: [],
