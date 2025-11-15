@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AuthServiceModule);
   
   // Use port 3001 for the auth service
-  await app.listen(3001); 
+  await app.listen(3001, '127.0.0.1'); 
   console.log(`AuthService is running on: ${await app.getUrl()}`);
 }
 bootstrap();
