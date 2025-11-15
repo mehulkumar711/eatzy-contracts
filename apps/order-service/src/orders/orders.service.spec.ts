@@ -8,6 +8,8 @@ import { DataSource } from 'typeorm';
 import { ConflictException } from '@nestjs/common';
 import { CreateOrderDto } from './create-order.dto';
 import { User } from '../users/user.entity'; // Import User
+// We need to import JwtPayload if we want to type the mock user
+// import { JwtPayload } from 'src/auth/jwt-payload.interface';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -59,14 +61,21 @@ describe('OrdersService', () => {
       total_amount_paise: 24000,
     };
     
-    const mockUser = { userId: 'customer-123', role: 'customer', phone: '+911234567890' };
+    // This is the fixed mock object. 
+    // To be strictly correct, you would import JwtPayload and type it:
+    // const mockUser: JwtPayload = { ... };
+    const mockUser = { 
+      userId: 'customer-123', 
+      phone: '+911234567890', // The missing phone property is now added
+      role: 'customer' 
+    };
 
     // Mock idempotency check (event not found)
     mockQueryRunner.manager.findOne.mockResolvedValueOnce(null); 
     // Mock customer check (customer found)
     mockQueryRunner.manager.findOne.mockResolvedValueOnce({ id: 'customer-123' }); 
 
-    const res = await service.createOrder(dto, mockUser); // Pass user
+    const res = await service.createOrder(dto, mockUser); // Pass fixed user
 
     expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
     expect(mockQueryRunner.manager.save).toHaveBeenCalledTimes(3); // Order, Saga, Event
