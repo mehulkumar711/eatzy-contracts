@@ -10,16 +10,20 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: eatzy_db
-      # CRITICAL FIX → forces strong password auth at init time
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      # Don't use -d eatzy_db (it may not exist yet)
-      test: ["CMD-SHELL", "pg_isready -U user"]
+      # Your healthcheck is perfect. It uses the socket.
+      test: ["CMD-SHELL", "pg_isready -U user -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
+    #
+    # THE FIX (v1.18): This command forces Postgres
+    # to listen on its network port (TCP/IP).
+    #
+    command: postgres -c "listen_addresses=*"
 
   redis:
     image: redis:7-alpine
