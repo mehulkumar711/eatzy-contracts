@@ -1,27 +1,24 @@
 $ErrorActionPreference = "Stop"
-Write-Host "========== EATZY LOCAL DATABASE SETUP (v1.25) =========="
+Write-Host "========== EATZY LOCAL DATABASE SETUP (v1.26) =========="
 
+# Suppress warnings properly using 2>$null instead of 2>&1 | Out-Null
 Write-Host "[1/5] Destroying old containers and stale volumes..."
-docker-compose down --volumes 2>&1 | Out-Null
+docker compose down --volumes 2>$null
 
 if (Test-Path -Path "./data") {
     Write-Host "      Nuking stale './data' folder..."
     Remove-Item -Recurse -Force ./data -ErrorAction SilentlyContinue
 }
 
-Write-Host "[2/5] Starting Docker containers (waiting for healthcheck)..."
-docker compose up -d --wait 2>&1 | Out-Null
-
+Write-Host "[2/5] Starting Docker containers..."
+docker compose up -d --wait 2>$null
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "`n❌ Healthcheck failed. Last container logs:"
-    docker logs eatzy_postgres --tail 50  # Show diagnostic logs
     throw "Docker compose failed. Postgres container never became healthy."
 }
 
 Write-Host "[3/5] ✅ PostgreSQL container is healthy."
-Write-Host "      Now verifying application database is ready..."
+Write-Host "      Verifying application database..."
 
-# Wait for YOUR database to be created
 $retries = 0
 do {
     Start-Sleep 2; Write-Host "." -NoNewline
