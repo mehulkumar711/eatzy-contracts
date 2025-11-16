@@ -1,4 +1,4 @@
--- Seed Users (with real UUIDs)
+-- Seed Users (v1.32 - with real UUIDs)
 INSERT INTO "users" (id, phone, role, pin_hash, created_at, updated_at)
 VALUES
 ('11111111-1111-1111-1111-111111111111', '+911234567890', 'customer', 'TBD_HASHED_PIN', NOW(), NOW());

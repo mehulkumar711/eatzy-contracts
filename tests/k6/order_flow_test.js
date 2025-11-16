@@ -6,11 +6,11 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 const AUTH_URL = __ENV.K6_AUTH_URL || 'http://localhost:3001/api/v1/auth/login';
 const ORDER_URL = __ENV.K6_ORDER_URL || 'http://localhost:3000/api/v1/orders';
 
-// --- Credentials from seed.sql ---
+// --- Credentials from v1.30 auth-service logic & v1.32 seed.sql ---
 const PHONE = '+911234567890';
 const PIN = '1234'; // The auth-service mock validates this
 
-// --- UUIDs from seed.sql ---
+// --- UUIDs from v1.32 seed.sql ---
 const VENDOR_ID = '22222222-2222-2222-2222-222222222222';
 const ITEM_ID = '33333333-3333-3333-3333-333333333333';
 
@@ -19,7 +19,7 @@ export function setup() {
   console.log('Running setup() to get auth token...');
   const payload = JSON.stringify({
     phone: PHONE,
-    pin: PIN,
+    pin: PIN, // FIX 1: Send the PIN
   });
   const params = {
     headers: { 'Content-Type': 'application/json' },
@@ -29,9 +29,10 @@ export function setup() {
 
   if (res.status !== 201) {
     console.error(`Auth service login failed. Status: ${res.status}, Body: ${res.body}`);
-    return { token: null }; // Pass null token to default function
+    return { token: null };
   }
   
+  // FIX 2: Parse 'access_token' (lowercase)
   const token = res.json('access_token');
   if (!token) {
     console.error(`Auth service did not return an 'access_token'. Body: ${res.body}`);
@@ -44,23 +45,17 @@ export function setup() {
 
 // --- k6 default function (Main Test) ---
 export default function (data) {
-  // 1. Handle auth failure from setup()
   if (!data.token) {
     console.log('No auth token from setup(), aborting VU.');
     return;
   }
   const token = data.token;
-
-  //
-  // --- FIX 1: client_request_id MUST be a valid UUID ---
-  //
+  
   const clientRequestId = uuidv4(); // Use a real UUID
   
   const createOrderPayload = JSON.stringify({
     client_request_id: clientRequestId,
-    //
-    // --- FIX 2: Use the valid UUIDs from seed.sql ---
-    //
+    // FIX 3: Use the correct VENDOR_ID and ITEM_ID
     vendor_id: VENDOR_ID,
     items: [
       { item_id: ITEM_ID, quantity: 2 },
@@ -75,15 +70,12 @@ export default function (data) {
     },
   };
 
-  // 3. --- Test 1: Create Order ---
+  // --- Test 1: Create Order ---
   const createRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Order response status: ${createRes.status}`);
   console.log(`Order response body: ${createRes.body}`);
 
-  //
-  // --- FIX 3: Correct the k6 check for order_id ---
-  //
   const createOrderCheck = check(createRes, {
     'status is 202': (r) => r.status === 202,
     'has order_id': (r) => {
@@ -93,13 +85,9 @@ export default function (data) {
     },
   });
   
-  if (!createOrderCheck) {
-    // If creation failed (e.g., 400), don't attempt the replay
-    return; 
-  }
+  if (!createOrderCheck) { return; }
 
-  // 4. --- Test 2: Idempotent Replay ---
-  // Send the *exact same request* again.
+  // --- Test 2: Idempotent Replay ---
   const replayRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Idempotent replay status: ${replayRes.status}`);
