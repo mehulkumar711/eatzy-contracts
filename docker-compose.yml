@@ -1,4 +1,4 @@
-# Remove the version line completely
+# version: '3.9'  <-- REMOVED
 services:
   postgres:
     image: postgres:15-alpine
@@ -16,8 +16,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
-      retries: 20
-
+      retries: 20 # Increased retries
   redis:
     image: redis:7-alpine
     container_name: eatzy_redis
