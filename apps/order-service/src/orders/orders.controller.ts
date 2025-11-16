@@ -1,25 +1,8 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Get,
-  Param,
-  ValidationPipe,
-  UsePipes,
-  HttpCode,
-  UseGuards,
-  // 'Request' is no longer needed
-} from '@nestjs/common';
+import { Body, Controller, Post, Get, Param, ValidationPipe, UsePipes, HttpCode, UseGuards, Request } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './create-order.dto';
-// Patched: Use the shared library path
-import {
-  JwtAuthGuard,
-  Roles,
-  RolesGuard,
-  User, // <-- This is now correctly imported
-  JwtPayload,
-} from '@app/shared'; // Make sure '@app/shared' points to your lib
+import { JwtAuthGuard, Roles, RolesGuard } from '@app/shared';
+import { JwtPayload } from '@app/shared';
 
 @Controller('api/v1/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,11 +13,8 @@ export class OrdersController {
   @HttpCode(202)
   @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async create(
-    @Body() dto: CreateOrderDto,
-    @User() user: JwtPayload, // <-- Use the @User decorator
-  ) {
-    // The user object is now correctly injected
+  async create(@Body() dto: CreateOrderDto, @Request() req: { user: JwtPayload }) {
+    const user = req.user; 
     return this.ordersService.createOrder(dto, user);
   }
 
