@@ -8,7 +8,7 @@ const ORDER_URL = __ENV.K6_ORDER_URL || 'http://localhost:3000/api/v1/orders';
 
 // --- Credentials from v1.30 auth-service logic & v1.32 seed.sql ---
 const PHONE = '+911234567890';
-const PIN = '1234'; // The auth-service mock validates this
+const PIN = '1234'; 
 
 // --- UUIDs from v1.32 seed.sql ---
 const VENDOR_ID = '22222222-2222-2222-2222-222222222222';
@@ -19,7 +19,7 @@ export function setup() {
   console.log('Running setup() to get auth token...');
   const payload = JSON.stringify({
     phone: PHONE,
-    pin: PIN, // FIX 1: Send the PIN
+    pin: PIN,
   });
   const params = {
     headers: { 'Content-Type': 'application/json' },
@@ -32,7 +32,6 @@ export function setup() {
     return { token: null };
   }
   
-  // FIX 2: Parse 'access_token' (lowercase)
   const token = res.json('access_token');
   if (!token) {
     console.error(`Auth service did not return an 'access_token'. Body: ${res.body}`);
@@ -55,12 +54,11 @@ export default function (data) {
   
   const createOrderPayload = JSON.stringify({
     client_request_id: clientRequestId,
-    // FIX 3: Use the correct VENDOR_ID and ITEM_ID
-    vendor_id: VENDOR_ID,
+    vendor_id: VENDOR_ID, // Use the real UUID
     items: [
-      { item_id: ITEM_ID, quantity: 2 },
+      { item_id: ITEM_ID, quantity: 2 }, // Use the real UUID
     ],
-    total_amount_paise: 20000, // 2 * 10000
+    total_amount_paise: 20000,
   });
 
   const params = {
