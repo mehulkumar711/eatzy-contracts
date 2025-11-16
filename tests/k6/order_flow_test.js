@@ -29,7 +29,7 @@ export function setup() {
 
   if (res.status !== 201) {
     console.error(`Auth service login failed. Status: ${res.status}, Body: ${res.body}`);
-    return { token: null };
+    return { token: null }; // Pass null token to default function
   }
   
   const token = res.json('access_token');
@@ -81,9 +81,16 @@ export default function (data) {
   console.log(`Order response status: ${createRes.status}`);
   console.log(`Order response body: ${createRes.body}`);
 
+  //
+  // --- FIX 3: Correct the k6 check for order_id ---
+  //
   const createOrderCheck = check(createRes, {
     'status is 202': (r) => r.status === 202,
-    'has order_id': (r) => r.json('order_id') !== null && r.json('order_id') !== undefined,
+    'has order_id': (r) => {
+      if (r.status !== 202) return false;
+      const body = r.json();
+      return body && typeof body.order_id === 'string' && body.order_id.length > 0;
+    },
   });
   
   if (!createOrderCheck) {
