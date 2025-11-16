@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from '@app/shared'; // This import will now work
+import { PassportModule } from '@nestjs/passport'; // 1. Import Passport
+import { JwtStrategy } from '@app/shared'; // 2. Import the Strategy
 
 import { Order } from './order.entity';
 import { Saga } from '../sagas/saga.entity';
@@ -13,13 +13,13 @@ import { OrdersService } from './orders.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, Saga, User, ProcessedEvents]),
-    // Register Passport to use 'jwt'
+    // 3. Register Passport to use 'jwt'
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   controllers: [OrdersController],
   providers: [
     OrdersService,
-    JwtStrategy, // Provide the strategy
+    JwtStrategy, // 4. Provide the Strategy
   ],
 })
-export class OrdersModule {} // This 'export' fixes the build error
+export class OrdersModule {}
