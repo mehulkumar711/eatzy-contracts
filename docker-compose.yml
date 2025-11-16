@@ -1,4 +1,5 @@
-# version: '3.9'  <-- REMOVED
+version: '3.9'
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -13,10 +14,18 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
+      # This healthcheck is correct: it checks the service via the socket.
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
-      retries: 20 # Increased retries
+      retries: 20
+    #
+    # THE FIX (v1.29): This command forces Postgres to
+    # listen on all network interfaces (*), which enables
+    # the TCP/IP connection from 127.0.0.1.
+    #
+    command: postgres -c "listen_addresses=*"
+
   redis:
     image: redis:7-alpine
     container_name: eatzy_redis
