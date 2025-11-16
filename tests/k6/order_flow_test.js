@@ -50,13 +50,20 @@ export default function (data) {
     return;
   }
   const token = data.token;
+
+  //
+  // --- FIX 1: client_request_id MUST be a valid UUID ---
+  //
   const clientRequestId = uuidv4(); // Use a real UUID
   
   const createOrderPayload = JSON.stringify({
     client_request_id: clientRequestId,
-    vendor_id: VENDOR_ID, // Use the real UUID
+    //
+    // --- FIX 2: Use the valid UUIDs from seed.sql ---
+    //
+    vendor_id: VENDOR_ID,
     items: [
-      { item_id: ITEM_ID, quantity: 2 }, // Use the real UUID
+      { item_id: ITEM_ID, quantity: 2 },
     ],
     total_amount_paise: 20000, // 2 * 10000
   });
@@ -74,6 +81,9 @@ export default function (data) {
   console.log(`Order response status: ${createRes.status}`);
   console.log(`Order response body: ${createRes.body}`);
 
+  //
+  // --- FIX 3: Correct the k6 check for order_id ---
+  //
   const createOrderCheck = check(createRes, {
     'status is 202': (r) => r.status === 202,
     'has order_id': (r) => {
@@ -83,9 +93,13 @@ export default function (data) {
     },
   });
   
-  if (!createOrderCheck) { return; }
+  if (!createOrderCheck) {
+    // If creation failed (e.g., 400), don't attempt the replay
+    return; 
+  }
 
   // 4. --- Test 2: Idempotent Replay ---
+  // Send the *exact same request* again.
   const replayRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Idempotent replay status: ${replayRes.status}`);
