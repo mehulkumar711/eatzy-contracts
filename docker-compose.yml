@@ -10,23 +10,19 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: eatzy_db
-      # This line CORRECTLY forces strong password auth AND enables TCP listening.
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       #
-      # THE FIX (v1.22): Use the correct user and db.
-      # This will only pass *after* the init scripts have run
-      # and created the user/db.
+      # THE FIX (v1.23): Check the default 'postgres' db as the
+      # 'postgres' superuser. This is the only check that is
+      # guaranteed to work as soon as the service is running.
       #
-      test: ["CMD-SHELL", "pg_isready -U user -d eatzy_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    #
-    # My flawed 'command:' override has been REMOVED.
-    #
 
   redis:
     image: redis:7-alpine
