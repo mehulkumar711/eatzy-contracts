@@ -15,7 +15,7 @@ import {
   JwtAuthGuard,
   Roles,
   RolesGuard,
-  User,
+  User, // We are using this decorator
   JwtPayload,
 } from '@app/shared';
 
@@ -26,15 +26,15 @@ export class OrdersController {
 
   @Post()
   @HttpCode(202)
-  @Roles('customer')
+  @Roles('customer') // The guard is checking for this role
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(
     @Body() dto: CreateOrderDto,
-    @User() user: JwtPayload,
+    @User() user: JwtPayload, // The @User decorator injects the payload
   ) {
     //
-    // --- THIS IS THE FIX ---
-    // Log the payload to see what the RolesGuard is seeing
+    // --- THIS IS THE DEBUGGING FIX ---
+    // Log the payload to see what the RolesGuard is seeing.
     //
     console.log('[OrdersController] Received token payload:', user);
 
