@@ -14,11 +14,11 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      # CHECK DEFAULT POSTGRES DB (always exists - NO RACE CONDITION)
+      # ✅ CORRECT: Uses default 'postgres' superuser (no race condition)
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
-      retries: 10  # 50 seconds total - more tolerant for Windows Docker
+      retries: 20  # 🔥 100 seconds for Windows Docker (was 10)
 
   redis:
     image: redis:7-alpine
