@@ -14,15 +14,11 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      #
-      # THE FIX (v1.23): Check the default 'postgres' db as the
-      # 'postgres' superuser. This is the only check that is
-      # guaranteed to work as soon as the service is running.
-      #
+      # CHECK DEFAULT POSTGRES DB (always exists - NO RACE CONDITION)
       test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10  # 50 seconds total - more tolerant for Windows Docker
 
   redis:
     image: redis:7-alpine
