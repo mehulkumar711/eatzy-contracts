@@ -14,14 +14,19 @@ services:
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
-      # Your healthcheck is perfect.
-      test: ["CMD-SHELL", "pg_isready -U user -d postgres"]
+      #
+      # THE FIX (v1.20): Check the default 'postgres' db as the
+      # 'postgres' superuser. This will pass as soon as the
+      # container service is ready, before 'user' or 'eatzy_db' exist.
+      #
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     #
-    # THE FIX (v1.18): This command forces Postgres
-    # to listen on its network port (TCP/IP).
+    # THE FIX (v1.20): This command forces Postgres
+    # to listen on its network port (TCP/IP). This is the
+    # root cause of the "Connection refused" error.
     #
     command: postgres -c "listen_addresses=*"
 

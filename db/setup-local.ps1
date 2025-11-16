@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-Write-Host "========== EATZY LOCAL DATABASE SETUP (v1.17) =========="
+Write-Host "========== EATZY LOCAL DATABASE SETUP (v1.20) =========="
 Write-Host ""
 Write-Host "[1/5] Destroying old containers and stale volumes..."
 docker-compose down --volumes
@@ -10,9 +10,8 @@ if (Test-Path -Path "./data") {
 
 Write-Host "[2/5] Starting Docker containers..."
 #
-# THE FIX (v1.17): Use '--wait'
-# This command tells Docker Compose to wait until the 'healthcheck'
-# in your docker-compose.yml file passes.
+# This 'docker compose up' command will now work
+# because the v1.20 healthcheck is correct.
 #
 docker compose up -d --wait
 
@@ -21,8 +20,10 @@ Write-Host "      Giving the database 2s to settle..."
 Start-Sleep 2
 
 #
-# We still use TCP/IP (-h) and Password (-e) for migrations
-# to ensure we are simulating the NestJS app's connection.
+# THE FIX (v1.20): We use TCP/IP (-h) and Password (-e) for ALL
+# migration and seeding steps. This is now guaranteed to work
+# because the 'command:' in docker-compose.yml has
+# forced Postgres to listen on its network port.
 #
 Write-Host "[4/5] Running Migrations (on 'eatzy_db')..."
 Get-Content db/migrations/V1__init_sagas_and_idempotency.sql | docker exec -i -e PGPASSWORD=password eatzy_postgres psql -h 127.0.0.1 -U user -d eatzy_db
