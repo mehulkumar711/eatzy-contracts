@@ -1,5 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+// 1. Import the shared JwtPayload interface
+import { JwtPayload } from '@app/shared';
 
 // In a real app, you would get this by querying the 'users' table
 const MOCK_USERS = [
@@ -10,27 +13,41 @@ const MOCK_USERS = [
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  // 2. Inject ConfigService to get the JWT_SECRET
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  async loginWithPhone(phone: string) {
+  async loginWithPhone(phone: string): Promise<{ access_token: string }> {
     const user = MOCK_USERS.find(u => u.phone === phone);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    const payload = { 
+    //
+    // --- FIX 2: Create the CORRECT payload ---
+    // It must match the JwtPayload interface
+    //
+    const payload: JwtPayload = { 
+      userId: user.userId, // Use 'userId', not 'sub'
       phone: user.phone, 
-      sub: user.userId,
       role: user.role 
     };
 
-    // 3. Sign and return the token
+    // 3. Sign the token
+    const token = this.jwtService.sign(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
+      issuer: 'eatzy-auth-service',
+      audience: 'eatzy-app',
+    });
+
+    //
+    // --- FIX 1: Return the CORRECT key ---
+    // Must be 'access_token' (lowercase)
+    //
     return {
-      accessToken: this.jwtService.sign(payload, {
-        // Patched: Add audience and issuer
-        issuer: 'eatzy-auth-service',
-        audience: 'eatzy-app',
-      }),
+      access_token: token,
     };
   }
 }
