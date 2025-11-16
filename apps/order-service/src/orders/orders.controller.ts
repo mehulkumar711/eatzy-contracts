@@ -1,23 +1,7 @@
-import {
-  Body,
-  Controller,
-  Post,
-  Get,
-  Param,
-  ValidationPipe,
-  UsePipes,
-  HttpCode,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, UsePipes, ValidationPipe, HttpCode } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './create-order.dto';
-import {
-  JwtAuthGuard,
-  Roles,
-  RolesGuard,
-  User, // We are using this decorator
-  JwtPayload,
-} from '@app/shared';
+import { JwtAuthGuard, Roles, RolesGuard, User, JwtPayload } from '@app/shared';
 
 @Controller('api/v1/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -26,18 +10,17 @@ export class OrdersController {
 
   @Post()
   @HttpCode(202)
-  @Roles('customer') // The guard is checking for this role
+  @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async create(
-    @Body() dto: CreateOrderDto,
-    @User() user: JwtPayload, // The @User decorator injects the payload
-  ) {
-    //
-    // --- THIS IS THE DEBUGGING FIX ---
-    // Log the payload to see what the RolesGuard is seeing.
-    //
-    console.log('[OrdersController] Received token payload:', user);
-
+  async create(@Body() dto: CreateOrderDto, @User() user: JwtPayload) {
+    // 🔍 DIAGNOSTIC LOGGING - DO NOT REMOVE YET
+    console.log('═══════════════════════════════════════════════════════════════');
+    console.log('[DIAGNOSTIC] JWT Payload received:');
+    console.log(JSON.stringify(user, null, 2));
+    console.log('[DIAGNOSTIC] Has "role" property?', 'role' in user);
+    console.log('[DIAGNOSTIC] Role value:', user.role);
+    console.log('═══════════════════════════════════════════════════════════════');
+    
     return this.ordersService.createOrder(dto, user);
   }
 
