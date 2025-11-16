@@ -13,11 +13,11 @@ export class OrdersController {
   @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(@Body() dto: CreateOrderDto, @User() user: JwtPayload) {
-    // 🔍 DIAGNOSTIC LOGGING - DO NOT REMOVE YET
+    // 🔥 THIS MUST APPEAR IN ORDER-SERVICE LOGS
     console.log('═══════════════════════════════════════════════════════════════');
-    console.log('[DIAGNOSTIC] JWT Payload received:');
+    console.log('[DIAGNOSTIC] JWT Payload:');
     console.log(JSON.stringify(user, null, 2));
-    console.log('[DIAGNOSTIC] Has "role" property?', 'role' in user);
+    console.log('[DIAGNOSTIC] Has "role"?', 'role' in user);
     console.log('[DIAGNOSTIC] Role value:', user.role);
     console.log('═══════════════════════════════════════════════════════════════');
     
