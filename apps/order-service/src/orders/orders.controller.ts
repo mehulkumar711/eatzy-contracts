@@ -1,8 +1,23 @@
-import { Body, Controller, Post, Get, Param, ValidationPipe, UsePipes, HttpCode, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Get,
+  Param,
+  ValidationPipe,
+  UsePipes,
+  HttpCode,
+  UseGuards,
+} from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './create-order.dto';
-import { JwtAuthGuard, Roles, RolesGuard } from '@app/shared';
-import { JwtPayload } from '@app/shared';
+import {
+  JwtAuthGuard,
+  Roles,
+  RolesGuard,
+  User,
+  JwtPayload,
+} from '@app/shared';
 
 @Controller('api/v1/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -13,8 +28,16 @@ export class OrdersController {
   @HttpCode(202)
   @Roles('customer')
   @UsePipes(new ValidationPipe({ transform: true }))
-  async create(@Body() dto: CreateOrderDto, @Request() req: { user: JwtPayload }) {
-    const user = req.user; 
+  async create(
+    @Body() dto: CreateOrderDto,
+    @User() user: JwtPayload,
+  ) {
+    //
+    // --- THIS IS THE FIX ---
+    // Log the payload to see what the RolesGuard is seeing
+    //
+    console.log('[OrdersController] Received token payload:', user);
+
     return this.ordersService.createOrder(dto, user);
   }
 
