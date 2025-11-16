@@ -6,11 +6,11 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 const AUTH_URL = __ENV.K6_AUTH_URL || 'http://localhost:3001/api/v1/auth/login';
 const ORDER_URL = __ENV.K6_ORDER_URL || 'http://localhost:3000/api/v1/orders';
 
-// --- Credentials from v1.30 auth-service logic & v1.32 seed.sql ---
+// --- Credentials from seed.sql ---
 const PHONE = '+911234567890';
-const PIN = '1234'; 
+const PIN = '1234'; // The auth-service mock validates this
 
-// --- UUIDs from v1.32 seed.sql ---
+// --- UUIDs from seed.sql ---
 const VENDOR_ID = '22222222-2222-2222-2222-222222222222';
 const ITEM_ID = '33333333-3333-3333-3333-333333333333';
 
@@ -29,7 +29,7 @@ export function setup() {
 
   if (res.status !== 201) {
     console.error(`Auth service login failed. Status: ${res.status}, Body: ${res.body}`);
-    return { token: null };
+    return { token: null }; // Pass null token to default function
   }
   
   const token = res.json('access_token');
@@ -44,12 +44,12 @@ export function setup() {
 
 // --- k6 default function (Main Test) ---
 export default function (data) {
+  // 1. Handle auth failure from setup()
   if (!data.token) {
     console.log('No auth token from setup(), aborting VU.');
     return;
   }
   const token = data.token;
-  
   const clientRequestId = uuidv4(); // Use a real UUID
   
   const createOrderPayload = JSON.stringify({
@@ -58,7 +58,7 @@ export default function (data) {
     items: [
       { item_id: ITEM_ID, quantity: 2 }, // Use the real UUID
     ],
-    total_amount_paise: 20000,
+    total_amount_paise: 20000, // 2 * 10000
   });
 
   const params = {
@@ -68,7 +68,7 @@ export default function (data) {
     },
   };
 
-  // --- Test 1: Create Order ---
+  // 3. --- Test 1: Create Order ---
   const createRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Order response status: ${createRes.status}`);
@@ -85,7 +85,7 @@ export default function (data) {
   
   if (!createOrderCheck) { return; }
 
-  // --- Test 2: Idempotent Replay ---
+  // 4. --- Test 2: Idempotent Replay ---
   const replayRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Idempotent replay status: ${replayRes.status}`);
