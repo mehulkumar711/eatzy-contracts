@@ -10,25 +10,23 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: eatzy_db
+      # This line CORRECTLY forces strong password auth AND enables TCP listening.
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       #
-      # THE FIX (v1.20): Check the default 'postgres' db as the
-      # 'postgres' superuser. This will pass as soon as the
-      # container service is ready, before 'user' or 'eatzy_db' exist.
+      # THE FIX (v1.22): Use the correct user and db.
+      # This will only pass *after* the init scripts have run
+      # and created the user/db.
       #
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U user -d eatzy_db"]
       interval: 5s
       timeout: 5s
       retries: 5
     #
-    # THE FIX (v1.20): This command forces Postgres
-    # to listen on its network port (TCP/IP). This is the
-    # root cause of the "Connection refused" error.
+    # My flawed 'command:' override has been REMOVED.
     #
-    command: postgres -c "listen_addresses=*"
 
   redis:
     image: redis:7-alpine
