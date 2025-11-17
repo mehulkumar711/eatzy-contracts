@@ -1,52 +1,79 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from '../users/user.entity'; // Import User
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToOne,
+} from 'typeorm';
+import { User } from '@app/shared'; // This import is correct
+import { Saga } from '../sagas/saga.entity'; // Assumes this file exists
 
-export enum OrderStatus {
-  PENDING = 'pending',
-  PAID = 'paid',
-  ACCEPTED = 'accepted',
-  PREPARING = 'preparing',
-  READY = 'ready',
-  PICKED_UP = 'picked_up',
-  DELIVERED = 'delivered',
-  CANCELLED = 'cancelled',
-}
+// This enum was created in our V2 migration
+export type OrderStatus =
+  | 'PENDING'
+  | 'VENDOR_ACCEPTED'
+  | 'VENDOR_REJECTED'
+  | 'READY_FOR_PICKUP'
+  | 'RIDER_ASSIGNED'
+  | 'RIDER_PICKED_UP'
+  | 'DELIVERED'
+  | 'CANCELLED';
 
-@Entity('orders')
+@Entity({ name: 'orders' })
 export class Order {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
-  // Patched: Add FK relationship
-  @ManyToOne(() => User, { onDelete: 'SET NULL' }) // Or 'CASCADE'
-  @JoinColumn({ name: 'customer_id' })
-  customer: User;
+  //
+  // --- THE FIX (v1.53): Define the UNIDIRECTIONAL relationship ---
+  //
+  @ManyToOne(() => User) // Point to the User entity
+  @JoinColumn({ name: 'user_id' }) // Map to the 'user_id' db column
+  customer: User; // This is the property TypeORM was looking for
 
-  @Column({ type: 'uuid', name: 'customer_id' })
-  customerId!: string;
+  @Column('uuid')
+  user_id: string;
+  // --- End of Fix ---
 
-  @Column({ type: 'uuid', name: 'vendor_id' })
-  vendorId!: string;
+  @Column('uuid')
+  vendor_id: string;
 
-  @Column({ type: 'uuid', name: 'rider_id', nullable: true })
-  riderId?: string;
+  @Column('uuid', { nullable: true })
+  rider_id: string;
 
   @Column({
     type: 'enum',
-    enum: OrderStatus,
-    default: OrderStatus.PENDING,
+    enumName: 'order_status',
+    enum: [
+      'PENDING',
+      'VENDOR_ACCEPTED',
+      'VENDOR_REJECTED',
+      'READY_FOR_PICKUP',
+      'RIDER_ASSIGNED',
+      'RIDER_PICKED_UP',
+      'DELIVERED',
+      'CANCELLED',
+    ],
+    default: 'PENDING',
   })
-  status!: OrderStatus;
+  status: OrderStatus;
 
-  @Column({ type: 'bigint', name: 'total_amount_paise' })
-  totalAmountPaise!: number;
+  @Column('int')
+  total_amount_paise: number;
 
-  @Column({ type: 'uuid', name: 'client_request_id', unique: true })
-  clientRequestId!: string;
+  @OneToOne(() => Saga)
+  @JoinColumn({ name: 'saga_id' })
+  saga: Saga;
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt!: Date;
+  @Column('uuid')
+  saga_id: string;
 
-  @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 }

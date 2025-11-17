@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { User } from '@app/shared'; // Import User entity
-import { JwtStrategy } from '../jwt.strategy'; // Import the new local strategy
+import { JwtStrategy } from '../jwt.strategy'; // Import local strategy
 
 import { Order } from './order.entity';
 import { Saga } from '../sagas/saga.entity';
@@ -13,22 +13,23 @@ import { OrdersService } from './orders.service';
 @Module({
   imports: [
     //
-    // --- THE FIX (v1.50) ---
+    // --- THE FIX (v1.53): ---
+    // This line registers ALL entities required by this module
+    // with TypeORM. This is what fixes the "metadata not found" error.
     //
-    // 1. Import User entity to satisfy JwtStrategy's dependency
-    TypeOrmModule.forFeature([User, Order, Saga, ProcessedEvents]),
+    TypeOrmModule.forFeature([
+      User, 
+      Order, 
+      Saga, 
+      ProcessedEvents
+    ]),
     
-    // 2. Register Passport
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   controllers: [OrdersController],
   providers: [
     OrdersService,
-    //
-    // --- THE FIX (v1.50) ---
-    //
-    // 3. Provide the local JwtStrategy
-    JwtStrategy,
+    JwtStrategy, // The local strategy
   ],
 })
 export class OrdersModule {}

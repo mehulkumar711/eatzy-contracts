@@ -1,16 +1,18 @@
-import { Entity, Column, PrimaryColumn, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
 
-@Entity('processed_events')
+@Entity({ name: 'processed_events' })
 export class ProcessedEvents {
-  @PrimaryColumn({ type: 'uuid', name: 'event_id' })
-  event_id!: string;
+  //
+  // --- THE FIX (v1.55): ---
+  // The primary key is 'idempotency_key' and it is a string,
+  // matching our V1 database migration.
+  //
+  @PrimaryColumn('varchar', { length: 255 })
+  idempotency_key: string;
 
-  @PrimaryColumn({ type: 'text', name: 'consumer_group' })
-  consumer_group!: string;
+  @Column('uuid')
+  saga_id: string;
 
-  @Column({ type: 'text' })
-  topic!: string;
-
-  @CreateDateColumn({ name: 'created_at' })
-  created_at!: Date;
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
 }

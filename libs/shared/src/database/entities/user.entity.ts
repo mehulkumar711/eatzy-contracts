@@ -22,4 +22,11 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
+
+  //
+  // --- THE FIX (v1.53): ---
+  // We DO NOT add the @OneToMany relationship here.
+  // This keeps the shared entity pure and avoids
+  // a circular dependency.
+  //
 }
