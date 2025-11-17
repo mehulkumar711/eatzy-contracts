@@ -1,51 +1,58 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-// 1. Import the shared JwtPayload interface
-import { JwtPayload } from '@app/shared';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcryptjs';
 
-// In a real app, you would get this by querying the 'users' table
-const MOCK_USERS = [
-  { userId: '11111111-1111-1111-1111-111111111111', phone: '+911234567890', role: 'customer' },
-  { userId: '22222222-2222-2222-2222-222222222222', phone: '+919876543210', role: 'vendor' },
-  { userId: '33333333-3333-3333-3333-333333333333', phone: '+911122334455', role: 'rider' },
-];
+import { JwtPayload, User } from '@app/shared';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
-  // 2. Inject ConfigService to get the JWT_SECRET
+  // 1. Inject the User repository
   constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
 
-  async loginWithPhone(phone: string): Promise<{ access_token: string }> {
-    const user = MOCK_USERS.find(u => u.phone === phone);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
+  /**
+   * Validates a user's phone and PIN against the database.
+   * This is no longer a mock.
+   */
+  async validateUser(loginDto: LoginDto): Promise<User> {
+    const { phone, pin } = loginDto;
+    
+    // 2. Find the user in the database
+    const user = await this.userRepository.findOne({ where: { phone } });
 
-    //
-    // --- FIX 2: Create the CORRECT payload ---
-    // It must match the JwtPayload interface
-    //
+    // 3. Check if user exists and PIN is correct
+    if (user && (await bcrypt.compare(pin, user.pin_hash))) {
+      if (!user.is_active) {
+        throw new UnauthorizedException('User account is inactive.');
+      }
+      return user;
+    }
+    
+    throw new UnauthorizedException('Invalid credentials.');
+  }
+
+  /**
+   * Logs in a user and returns a signed JWT.
+   */
+  async login(user: User): Promise<{ access_token: string }> {
+    // 4. Create the standard JWT payload
     const payload: JwtPayload = { 
-      userId: user.userId, // Use 'userId', not 'sub'
+      userId: user.id,
       phone: user.phone, 
       role: user.role 
     };
 
-    // 3. Sign the token
-    const token = this.jwtService.sign(payload, {
-      secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-      issuer: 'eatzy-auth-service',
-      audience: 'eatzy-app',
-    });
-
-    //
-    // --- FIX 1: Return the CORRECT key ---
-    // Must be 'access_token' (lowercase)
-    //
+    // 5. Sign and return the token
+    const token = this.jwtService.sign(payload);
+    
     return {
       access_token: token,
     };
