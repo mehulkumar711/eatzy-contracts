@@ -4,18 +4,15 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 // --- Environment Variables ---
 const AUTH_URL = __ENV.K6_AUTH_URL || 'http://localhost:3001/api/v1/auth/login';
-//
-// --- THE FIX (v1.35): Point to the correct port (3000) ---
-//
 const ORDER_URL = __ENV.K6_ORDER_URL || 'http://localhost:3000/api/v1/orders';
 
-// --- Credentials from v1.34 seed.sql ---
+// --- Credentials from v1.37 seed.sql ---
 const PHONE = '+911234567890';
 const PIN = '1234'; 
 
-// --- UUIDs from v1.34 seed.sql ---
-const VENDOR_ID = '22222222-2222-2222-2222-222222222222';
-const ITEM_ID = '33333333-3333-3333-3333-333333333333';
+// --- UUIDs from v1.37 seed.sql ---
+const VENDOR_ID = 'a8a1b2c3-1b1a-4b0f-8c0a-3f1f1b9f1b9f';
+const ITEM_ID = 'b9b2c3d4-1b1a-4b0f-8c0a-3f1f1b9f1b9f';
 
 // --- k6 setup() function ---
 export function setup() {
@@ -72,34 +69,29 @@ export default function (data) {
   };
 
   // --- Test 1: Create Order ---
-  console.log(`Sending CREATE_ORDER request to ${ORDER_URL}...`);
   const createRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Order response status: ${createRes.status}`);
   console.log(`Order response body: ${createRes.body}`);
 
   const createOrderCheck = check(createRes, {
-    'status is 202 (Accepted)': (r) => r.status === 202,
-    'body has order_id': (r) => {
+    'status is 202': (r) => r.status === 202,
+    'has order_id': (r) => {
       if (r.status !== 202) return false;
       const body = r.json();
       return body && typeof body.order_id === 'string' && body.order_id.length > 0;
     },
   });
   
-  if (!createOrderCheck) { 
-    console.error('Create Order check failed.');
-    return; 
-  }
+  if (!createOrderCheck) { return; }
 
   // --- Test 2: Idempotent Replay ---
-  console.log(`Sending Idempotent Replay request to ${ORDER_URL}...`);
   const replayRes = http.post(ORDER_URL, createOrderPayload, params);
   
   console.log(`Idempotent replay status: ${replayRes.status}`);
 
   check(replayRes, {
-    'idempotent replay returns 409 (Conflict)': (r) => r.status === 409,
+    'idempotent replay returns 409': (r) => r.status === 409,
   });
 
   sleep(1);
