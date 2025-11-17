@@ -1,22 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy, User } from '@app/shared'; // Import User entity
+import { User } from '@app/shared'; // Import User entity
+import { JwtStrategy } from '../jwt.strategy'; // Import the new local strategy
 
 import { Order } from './order.entity';
 import { Saga } from '../sagas/saga.entity';
 import { ProcessedEvents } from '../events/processed-events.entity';
-// We no longer import User from here, it's from @app/shared
-// import { User } from '../users/user.entity'; 
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
 
 @Module({
   imports: [
     //
-    // --- THE FIX (v1.46) ---
+    // --- THE FIX (v1.50) ---
     //
-    // 1. Import the User entity so @InjectRepository(User) works
+    // 1. Import User entity to satisfy JwtStrategy's dependency
     TypeOrmModule.forFeature([User, Order, Saga, ProcessedEvents]),
     
     // 2. Register Passport
@@ -26,9 +25,9 @@ import { OrdersService } from './orders.service';
   providers: [
     OrdersService,
     //
-    // --- THE FIX (v1.46) ---
+    // --- THE FIX (v1.50) ---
     //
-    // 3. Provide the JwtStrategy so the Guard can use it
+    // 3. Provide the local JwtStrategy
     JwtStrategy,
   ],
 })

@@ -5,31 +5,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 
-import { User, JwtPayload } from '@app/shared'; // Correct imports
+import { User, JwtPayload } from '@app/shared'; // Imports from shared lib
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly configService: ConfigService, // Inject ConfigService
+    private readonly configService: ConfigService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      // Correctly read secret from ConfigService
-      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'), 
+      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
-  /**
-   * This method is now database-aware.
-   * It runs for every incoming request on a protected route.
-   */
   async validate(payload: JwtPayload): Promise<User> {
     const { userId } = payload;
-    
-    // Find the user in the REAL DB
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -37,12 +30,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('User not found in JWT');
     }
-
     if (!user.is_active) {
       throw new UnauthorizedException('User account is inactive');
     }
-
-    // This 'user' object is attached to request.user
+    
     return user;
   }
 }

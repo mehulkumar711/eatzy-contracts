@@ -3,38 +3,34 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, JwtStrategy } from '@app/shared'; // This import now works
+import { User } from '@app/shared'; // Import User entity
 
 import { AuthServiceController } from './auth-service.controller';
 import { AuthService } from './auth-service.service';
+import { JwtStrategy } from './jwt.strategy'; // Import the new local strategy
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'apps/auth-service/.env', // Load .env file
+      envFilePath: 'apps/auth-service/.env',
     }),
-    
-    // Connect to PostgreSQL
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: '127.0.0.1', // Use 127.0.0.1 for Windows IPv4
+        host: '127.0.0.1',
         port: configService.getOrThrow<number>('DB_PORT'),
         username: configService.getOrThrow<string>('DB_USER'),
         password: configService.getOrThrow<string>('DB_PASSWORD'),
         database: configService.getOrThrow<string>('DB_NAME'),
-        entities: [User], // Load the User entity explicitly
-        autoLoadEntities: false, // Do not use autoLoadEntities
-        synchronize: false, // We use migrations
+        entities: [User], // Load the User entity
+        autoLoadEntities: false,
+        synchronize: false,
       }),
     }),
-    
-    // Import the User entity repository
     TypeOrmModule.forFeature([User]),
-    
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -50,6 +46,9 @@ import { AuthService } from './auth-service.service';
     }),
   ],
   controllers: [AuthServiceController],
-  providers: [AuthService, JwtStrategy], // Provide JwtStrategy
+  //
+  // --- THE FIX (v1.50): Provide the local JwtStrategy ---
+  //
+  providers: [AuthService, JwtStrategy], 
 })
 export class AuthServiceModule {}
