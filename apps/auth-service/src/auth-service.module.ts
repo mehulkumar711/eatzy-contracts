@@ -3,39 +3,38 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User, JwtStrategy } from '@app/shared'; // Import User entity
+import { User, JwtStrategy } from '@app/shared'; // This import now works
 
 import { AuthServiceController } from './auth-service.controller';
 import { AuthService } from './auth-service.service';
 
 @Module({
   imports: [
-    // 1. Load the .env file for auth-service
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'apps/auth-service/.env',
+      envFilePath: 'apps/auth-service/.env', // Load .env file
     }),
     
-    // 2. Connect to the PostgreSQL database
+    // Connect to PostgreSQL
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.getOrThrow<string>('DB_HOST'),
+        host: '127.0.0.1', // Use 127.0.0.1 for Windows IPv4
         port: configService.getOrThrow<number>('DB_PORT'),
         username: configService.getOrThrow<string>('DB_USER'),
         password: configService.getOrThrow<string>('DB_PASSWORD'),
         database: configService.getOrThrow<string>('DB_NAME'),
-        autoLoadEntities: true, // Auto-load our User entity
+        entities: [User], // Load the User entity explicitly
+        autoLoadEntities: false, // Do not use autoLoadEntities
         synchronize: false, // We use migrations
       }),
     }),
     
-    // 3. Import the User entity repository
+    // Import the User entity repository
     TypeOrmModule.forFeature([User]),
     
-    // 4. Configure Passport and JWT
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -43,7 +42,7 @@ import { AuthService } from './auth-service.service';
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: '1d', // 1 day expiration
+          expiresIn: '1d',
           audience: 'eatzy-app',
           issuer: 'eatzy-auth-service',
         },
@@ -51,7 +50,6 @@ import { AuthService } from './auth-service.service';
     }),
   ],
   controllers: [AuthServiceController],
-  // 5. Provide JwtStrategy for Passport
-  providers: [AuthService, JwtStrategy], 
+  providers: [AuthService, JwtStrategy], // Provide JwtStrategy
 })
 export class AuthServiceModule {}

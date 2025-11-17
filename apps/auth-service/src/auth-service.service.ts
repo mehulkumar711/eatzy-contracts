@@ -26,6 +26,7 @@ export class AuthService {
     
     const user = await this.userRepository.findOne({ where: { phone } });
 
+    // Compare plaintext pin with hashed pin
     if (user && (await bcrypt.compare(pin, user.pin_hash))) {
       if (!user.is_active) {
         throw new UnauthorizedException('User account is inactive.');

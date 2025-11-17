@@ -9,6 +9,6 @@ export * from './auth/jwt.strategy';
 export * from './decorators/user.decorator';
 
 //
-// --- THE FIX (v1.42): Export the User entity ---
+// --- THE FIX (v1.44): Export the User entity ---
 //
 export * from './database/entities/user.entity';

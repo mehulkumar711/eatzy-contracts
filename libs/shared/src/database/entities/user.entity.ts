@@ -1,20 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-
-export type Role = 'customer' | 'vendor' | 'rider';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity({ name: 'users' })
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
 
   @Column({ type: 'varchar', length: 20, unique: true })
   phone: string;
 
   @Column({ type: 'varchar', length: 20 })
-  role: Role;
+  role: string; // 'customer', 'vendor', 'rider'
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  pin_hash: string | null;
+  pin_hash: string;
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
