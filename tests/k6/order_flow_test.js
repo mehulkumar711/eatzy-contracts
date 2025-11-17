@@ -6,11 +6,11 @@ import { uuidv4 } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 const AUTH_URL = __ENV.K6_AUTH_URL || 'http://localhost:3001/api/v1/auth/login';
 const ORDER_URL = __ENV.K6_ORDER_URL || 'http://localhost:3000/api/v1/orders';
 
-// --- Credentials from v1.37 seed.sql ---
+// --- Credentials from v1.38 seed.sql ---
 const PHONE = '+911234567890';
 const PIN = '1234'; 
 
-// --- UUIDs from v1.37 seed.sql ---
+// --- UUIDs from v1.38 seed.sql ---
 const VENDOR_ID = 'a8a1b2c3-1b1a-4b0f-8c0a-3f1f1b9f1b9f';
 const ITEM_ID = 'b9b2c3d4-1b1a-4b0f-8c0a-3f1f1b9f1b9f';
 

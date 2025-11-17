@@ -1,5 +1,5 @@
 --
--- Core Eatzy Schema (v1.32)
+-- Core Eatzy Schema (v1.38)
 --
 
 -- Users Table (for all roles)
@@ -8,6 +8,10 @@ CREATE TABLE "users" (
   "phone" VARCHAR(20) UNIQUE NOT NULL,
   "role" VARCHAR(20) NOT NULL, -- 'customer', 'vendor', 'rider'
   "pin_hash" VARCHAR(255), -- For login
+  --
+  -- THE FIX: Add the missing 'is_active' column
+  --
+  "is_active" BOOLEAN NOT NULL DEFAULT true,
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW()),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW())
 );
@@ -16,7 +20,6 @@ CREATE TABLE "users" (
 CREATE TABLE "vendors" (
   "id" uuid PRIMARY KEY NOT NULL,
   "name" VARCHAR(255) NOT NULL,
-  -- other fields like 'address', 'is_open', etc.
   "created_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW()),
   "updated_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW())
 );
