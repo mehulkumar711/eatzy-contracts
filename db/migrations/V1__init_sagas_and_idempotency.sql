@@ -1,21 +1,25 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- V1 Sagas + Idempotency (v1.57 fix)
 
-CREATE TABLE IF NOT EXISTS processed_events (
-  event_id uuid NOT NULL,
-  consumer_group text NOT NULL CHECK (consumer_group <> ''),
-  topic text NOT NULL,
-  created_at timestamptz DEFAULT now(),
-  PRIMARY KEY (event_id, consumer_group)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE "sagas" (
+  "id" uuid PRIMARY KEY NOT NULL DEFAULT (uuid_generate_v4()),
+  "saga_type" VARCHAR(50) NOT NULL,
+  "status" VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+  "payload" JSONB,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW()),
+  "updated_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW())
 );
 
-CREATE TABLE IF NOT EXISTS sagas (
-  saga_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  order_id uuid UNIQUE NOT NULL,
-  current_state text NOT NULL,
-  payload jsonb,
-  steps jsonb,
-  last_error text,
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+--
+-- THE FIX (v1.57):
+-- The primary key MUST be 'idempotency_key' to match the entity
+-- and the service logic.
+--
+CREATE TABLE "processed_events" (
+  "idempotency_key" VARCHAR(255) PRIMARY KEY NOT NULL,
+  "saga_id" uuid NOT NULL,
+  "created_at" TIMESTAMPTZ NOT NULL DEFAULT (NOW()),
+  FOREIGN KEY ("saga_id") REFERENCES "sagas" ("id")
 );
