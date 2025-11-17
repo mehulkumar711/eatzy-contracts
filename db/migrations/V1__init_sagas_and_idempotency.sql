@@ -1,4 +1,4 @@
--- V1 Sagas + Idempotency (v1.57 fix)
+-- V1 Sagas + Idempotency (v1.59 fix)
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -13,9 +13,8 @@ CREATE TABLE "sagas" (
 );
 
 --
--- THE FIX (v1.57):
--- The primary key MUST be 'idempotency_key' to match the entity
--- and the service logic.
+-- THE FIX (v1.59):
+-- The primary key MUST be 'idempotency_key' to match the entity.
 --
 CREATE TABLE "processed_events" (
   "idempotency_key" VARCHAR(255) PRIMARY KEY NOT NULL,
