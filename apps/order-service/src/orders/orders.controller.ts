@@ -15,7 +15,7 @@ import {
   JwtAuthGuard,
   Roles,
   RolesGuard,
-  User,
+  CurrentUser, // <-- THE FIX: Use @CurrentUser
   JwtPayload,
 } from '@app/shared';
 
@@ -30,17 +30,10 @@ export class OrdersController {
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(
     @Body() dto: CreateOrderDto,
-    @User() user: JwtPayload,
+    @CurrentUser() user: JwtPayload, // <-- THE FIX: Use @CurrentUser
   ) {
-    //
-    // --- 🔍 DIAGNOSTIC LOGGING ---
-    //
-    console.log('═══════════════════════════════════════════════════════════════');
-    console.log('[DIAGNOSTIC] JWT Payload received:');
-    console.log(JSON.stringify(user, null, 2));
-    console.log('[DIAGNOSTIC] Has "role" property?', 'role' in user);
-    console.log('[DIAGNOSTIC] Role value:', user.role);
-    console.log('═══════════════════════════════════════════════════════════════');
+    // We can remove the diagnostic logging now
+    // console.log('[OrdersController] Received token payload:', user);
     
     return this.ordersService.createOrder(dto, user);
   }

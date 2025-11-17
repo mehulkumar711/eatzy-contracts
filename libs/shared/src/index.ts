@@ -5,10 +5,12 @@ export * from './auth/roles.guard';
 export * from './auth/jwt-payload.interface';
 export * from './auth/jwt.strategy';
 
-// --- Decorators ---
-export * from './decorators/user.decorator';
+//
+// --- THE FIX (v1.45): Export the entity and the renamed decorator ---
+//
 
-//
-// --- THE FIX (v1.44): Export the User entity ---
-//
+// 1. Export the TypeORM entity
 export * from './database/entities/user.entity';
+
+// 2. Export the NestJS decorator
+export * from './decorators/current-user.decorator';
