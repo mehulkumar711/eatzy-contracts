@@ -1,18 +1,34 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    // Run on port 3005 to avoid conflicts
-    port: 3005,
-    // Optional: Proxy API requests to our backend (for later)
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://localhost:3000', // Points to order-service
-    //     changeOrigin: true,
-    //   }
-    // }
+export default defineConfig(({ mode }) => {
+  // Load env file based on mode in the current working directory.
+  const env = loadEnv(mode, process.cwd(), '');
+
+  return {
+    plugins: [react()],
+    server: {
+      port: 3005,
+      proxy: {
+        '/api/auth': {
+          // Use env var if present, otherwise default to localhost
+          target: env.VITE_AUTH_SERVICE_URL || 'http://localhost:3001',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/auth/, '/api/v1/auth'),
+        },
+        '/api/orders': {
+          // Use env var if present, otherwise default to localhost
+          target: env.VITE_ORDER_SERVICE_URL || 'http://localhost:3000',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/orders/, '/api/v1/orders'),
+        },
+      },
+    },
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
   }
 })
