@@ -1,5 +1,8 @@
+-- db/seed.sql
+
 -- Seed ADMIN User (Mehul)
--- ID: admin, Pass: admin123
+-- ID: 999...999
+-- Username: 'admin', Password: 'admin123' (Hashed: $2b$12$NxDGfTVvoSs7dl1RVYVXH.e9lJVb0NFnkpwIZP.yY8314zlAd2AkG)
 INSERT INTO "users" (id, username, role, pin_hash, is_active, created_at, updated_at)
 VALUES ('99999999-9999-9999-9999-999999999999', 'admin', 'admin', '$2b$12$NxDGfTVvoSs7dl1RVYVXH.e9lJVb0NFnkpwIZP.yY8314zlAd2AkG', true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
