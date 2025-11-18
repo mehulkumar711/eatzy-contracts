@@ -1,3 +1,4 @@
+import React from 'react';
 export default function OrdersPage() {
-  return <h1>Orders Page</h1>;
-}   
+  return <h1>Orders Management Placeholder</h1>;
+}

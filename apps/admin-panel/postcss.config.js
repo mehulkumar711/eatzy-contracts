@@ -1,9 +1,12 @@
+// apps/admin-panel/postcss.config.js
+
+/** @type {import('postcss-load-config').Config} */
 export default {
   plugins: {
-    // FIX: Use the correct plugin name installed (@tailwindcss/postcss)
+    // FIX: Use the correct plugin name installed 
     '@tailwindcss/postcss': {}, 
     
-    // Keep the other necessary plugins
+    // These are required for correct CSS processing
     'postcss-import': {},
     autoprefixer: {},
   },
