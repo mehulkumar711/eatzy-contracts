@@ -1,8 +1,12 @@
 export default {
   plugins: {
-    // FIX: Use the correct plugin name for Tailwind v4 compatibility
+    //
+    // FIX: Use the correct PostCSS adapter plugin name.
+    // This resolves the "plugin has moved" error.
+    //
     '@tailwindcss/postcss': {}, 
-    // We remove the direct 'tailwindcss: {}' entry
+    
+    // Plugins needed for CSS layers and prefixing
     'postcss-import': {},
     autoprefixer: {},
   },
