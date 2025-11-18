@@ -5,14 +5,17 @@ export class User {
   @PrimaryColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
   phone: string;
 
+  @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+  username: string; // <-- NEW: For Admin Login
+
   @Column({ type: 'varchar', length: 20 })
-  role: string; // 'customer', 'vendor', 'rider'
+  role: string; 
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  pin_hash: string;
+  pin_hash: string; 
 
   @Column({ type: 'boolean', default: true })
   is_active: boolean;
@@ -22,11 +25,4 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
-
-  //
-  // --- THE FIX (v1.53): ---
-  // We DO NOT add the @OneToMany relationship here.
-  // This keeps the shared entity pure and avoids
-  // a circular dependency.
-  //
 }

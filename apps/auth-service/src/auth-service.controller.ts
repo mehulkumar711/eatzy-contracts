@@ -1,6 +1,7 @@
 import { Controller, Post, Body, ValidationPipe, UsePipes, HttpCode, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth-service.service';
-import { LoginDto } from './dto/login.dto'; // This import will now work
+import { LoginDto } from './dto/login.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
 
 @Controller('api/v1/auth')
 export class AuthServiceController {
@@ -10,14 +11,15 @@ export class AuthServiceController {
   @HttpCode(201)
   @UsePipes(new ValidationPipe())
   async login(@Body() loginDto: LoginDto) {
-    // 1. Validate user against the database
     const user = await this.authService.validateUser(loginDto);
-    
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    return this.authService.login(user);
+  }
 
-    // 2. If valid, issue the token
+  @Post('admin/login')
+  @HttpCode(200)
+  @UsePipes(new ValidationPipe())
+  async adminLogin(@Body() dto: AdminLoginDto) {
+    const user = await this.authService.validateAdmin(dto);
     return this.authService.login(user);
   }
 }
