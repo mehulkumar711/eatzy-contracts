@@ -1,0 +1,16 @@
+@layer antd, tailwind;
+
+@layer antd {
+  @import 'antd/dist/reset.css';
+}
+
+@layer tailwind {
+  @import 'tailwindcss/base';
+  @import 'tailwindcss/components';
+  @import 'tailwindcss/utilities';
+}
+
+body {
+  background-color: #f0f2f5;
+  margin: 0;
+}
