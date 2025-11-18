@@ -1,10 +1,14 @@
+// Path: apps/admin-panel/postcss.config.js
+
+/**
+ * @type {import('postcss-load-config').Config}
+ * Standard configuration for Tailwind CSS in a PostCSS pipeline.
+ */
 export default {
   plugins: {
-    // FIX 1: Use the correct plugin name installed (@tailwindcss/postcss)
-    '@tailwindcss/postcss': {}, 
-    
-    // FIX 2: We must keep these to process layers and prefixes
-    'postcss-import': {},
+    // FIX: Use the standard plugin name 'tailwindcss' for correct resolution.
+    // The previously attempted explicit name might have been incorrect for the setup.
+    tailwindcss: {}, 
     autoprefixer: {},
   },
 }

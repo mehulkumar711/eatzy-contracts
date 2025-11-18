@@ -1,16 +1,15 @@
-@layer antd, tailwind;
+/* Path: apps/admin-panel/src/index.css */
 
-@layer antd {
-  @import 'antd/dist/reset.css';
-}
+/* 1. Import Ant Design reset first. This is a global import that defines base browser styles. */
+@import 'antd/dist/reset.css';
 
-@layer tailwind {
-  @import 'tailwindcss/base';
-  @import 'tailwindcss/components';
-  @import 'tailwindcss/utilities';
-}
+/* 2. Use the official @tailwind directives. PostCSS will process these. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  background-color: #f0f2f5;
-  margin: 0;
+/* Global base styles */
+body { 
+    background: #f5f5f5; /* Standard background color for admin themes */
+    margin: 0; 
 }
