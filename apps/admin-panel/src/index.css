@@ -1,15 +1,1 @@
-/* apps/admin-panel/src/index.css */
-
-/* Import Ant Design reset first. */
-@import "antd/dist/reset.css";
-
-/* Tailwind Directives: Correct syntax for PostCSS */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Global Styles */
-body { 
-    background-color: #f0f2f5; 
-    margin: 0; 
-}
+@import "tailwindcss";
