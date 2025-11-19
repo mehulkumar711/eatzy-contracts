@@ -15,14 +15,14 @@ import {
   JwtAuthGuard,
   Roles,
   RolesGuard,
-  CurrentUser, // <-- THE FIX: Use @CurrentUser
+  CurrentUser,
   JwtPayload,
-} from '@app/shared';
+} from '../../../../libs/shared/src';
 
 @Controller('api/v1/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @Post()
   @HttpCode(202)
@@ -30,11 +30,11 @@ export class OrdersController {
   @UsePipes(new ValidationPipe({ transform: true }))
   async create(
     @Body() dto: CreateOrderDto,
-    @CurrentUser() user: JwtPayload, // <-- THE FIX: Use @CurrentUser
+    @CurrentUser() user: JwtPayload,
   ) {
     // We can remove the diagnostic logging now
     // console.log('[OrdersController] Received token payload:', user);
-    
+
     return this.ordersService.createOrder(dto, user);
   }
 

@@ -2,7 +2,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useEffect, useState } from 'react';
-import { jwtDecode } from 'jwt-decode';
+
 
 /**
  * Protects a route by checking for a valid (non-expired) token.

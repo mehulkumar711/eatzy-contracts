@@ -1,4 +1,17 @@
-import React from 'react';
+
+import DashboardStats from '@/components/dashboard/DashboardStats';
+import RecentActivity from '@/components/dashboard/RecentActivity';
+
 export default function DashboardPage() {
-  return <h1>Dashboard Placeholder</h1>;
+  return (
+    <div className="tw-space-y-6">
+      <h1 className="tw-text-2xl tw-font-bold tw-mb-4">Dashboard</h1>
+
+      {/* Stats Section */}
+      <DashboardStats />
+
+      {/* Recent Activity Section */}
+      <RecentActivity />
+    </div>
+  );
 }
