@@ -2,7 +2,7 @@
 
 import { Layout, Menu, Button, Space, Typography } from 'antd';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { DashboardOutlined, LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { DashboardOutlined, LogoutOutlined, UserOutlined, ShoppingCartOutlined, ShopOutlined } from '@ant-design/icons';
 import { useAuthStore } from '@/stores/authStore';
 
 const { Header, Sider, Content } = Layout;
@@ -13,12 +13,11 @@ export default function AppLayout() {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
 
-  // Modular menu items for scalability
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/users', icon: <UserOutlined />, label: 'Users' },
-    // Future expansion points
-    { key: '/orders', icon: <UserOutlined />, label: 'Orders (TBD)', disabled: true },
+    { key: '/orders', icon: <ShoppingCartOutlined />, label: 'Orders' },
+    { key: '/vendors', icon: <ShopOutlined />, label: 'Vendors' },
   ];
 
   return (
@@ -46,7 +45,7 @@ export default function AppLayout() {
               type="text"
               onClick={() => {
                 logout();
-                navigate('/login'); // Should be redundant due to api.ts interceptor but acts as a fallback
+                navigate('/login');
               }}
             >
               Logout

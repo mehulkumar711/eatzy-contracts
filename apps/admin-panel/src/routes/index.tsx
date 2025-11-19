@@ -9,6 +9,7 @@ const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const OrdersPage = lazy(() => import('@/pages/OrdersPage'));
 const UsersManagementPage = lazy(() => import('@/pages/UsersManagementPage'));
+const VendorsPage = lazy(() => import('@/pages/VendorsPage'));
 
 export const router = createBrowserRouter([
   // Public Route
@@ -21,7 +22,6 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      // This is the authentication check that runs on all dashboard routes
       <ProtectedRoute>
         <AppLayout />
       </ProtectedRoute>
@@ -45,6 +45,11 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: <UsersManagementPage />,
+        errorElement: <RouteErrorBoundary />,
+      },
+      {
+        path: 'vendors',
+        element: <VendorsPage />,
         errorElement: <RouteErrorBoundary />,
       },
     ],
