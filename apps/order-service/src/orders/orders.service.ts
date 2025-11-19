@@ -26,7 +26,7 @@ export class OrdersService {
     @InjectRepository(ProcessedEvents)
     private readonly processedEventsRepository: Repository<ProcessedEvents>,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   async createOrder(createOrderDto: CreateOrderDto, userPayload: JwtPayload) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -78,7 +78,7 @@ export class OrdersService {
       const order = queryRunner.manager.create(Order, {
         user_id: userId,
         vendor_id: vendor_id,
-        status: 'PENDING', 
+        status: 'PENDING',
         total_amount_paise: total_amount_paise,
         saga_id: saga.id,
         customer: customer,
@@ -114,6 +114,30 @@ export class OrdersService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  /**
+   * @method findAll
+   * @description Fetches paginated orders for the Admin Panel.
+   */
+  async findAll(page: number = 1, limit: number = 20, status?: string) {
+    const skip = (page - 1) * limit;
+
+    const whereClause = status ? { status: status as any } : {};
+
+    const [data, total] = await this.orderRepository.findAndCount({
+      where: whereClause,
+      order: { created_at: 'DESC' },
+      take: limit,
+      skip: skip,
+    });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
   async getStatus(id: string): Promise<{ order_id: string; status: OrderStatus }> {

@@ -4,10 +4,13 @@ import {
   Post,
   Get,
   Param,
+  Query,
   ValidationPipe,
   UsePipes,
   HttpCode,
   UseGuards,
+  DefaultValuePipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './create-order.dto';
@@ -24,6 +27,19 @@ import {
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) { }
 
+  /**
+   * @route GET /api/v1/orders
+   * @description List all orders (for Admin Panel)
+   */
+  @Get()
+  async findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('status') status?: string,
+  ) {
+    return this.ordersService.findAll(page, limit, status);
+  }
+
   @Post()
   @HttpCode(202)
   @Roles('customer')
@@ -32,9 +48,6 @@ export class OrdersController {
     @Body() dto: CreateOrderDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    // We can remove the diagnostic logging now
-    // console.log('[OrdersController] Received token payload:', user);
-
     return this.ordersService.createOrder(dto, user);
   }
 

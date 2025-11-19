@@ -4,7 +4,7 @@
 -- ID: 999...999
 -- Username: 'admin', Password: 'admin123' (Hashed: $2b$12$NxDGfTVvoSs7dl1RVYVXH.e9lJVb0NFnkpwIZP.yY8314zlAd2AkG)
 INSERT INTO "users" (id, username, role, pin_hash, is_active, created_at, updated_at)
-VALUES ('99999999-9999-9999-9999-999999999999', 'admin', 'admin', '$2b$12$oIEeMYrRBrcjW3ak49BySq.8lZ1xUHJNX0hbgXDU1oXlN9kFyuy9', true, NOW(), NOW())
+VALUES ('99999999-9999-9999-9999-999999999999', 'admin', 'admin', '$2b$12$de2xJGvLE6rCJo2BOw4GLupJuvWOZP/BbA4JoL0cWJQHjOQ60wvSG', true, NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- (Keep existing customer/vendor seeds below...)
