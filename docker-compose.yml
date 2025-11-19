@@ -1,35 +1,30 @@
-version: '3.9'
-
+# Path: docker-compose.yml
 services:
   postgres:
     image: postgres:15-alpine
     container_name: eatzy_postgres
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: eatzy_db
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
+    # FIX: Use a named volume instead of a local bind mount for stability
+    volumes: 
+      - eatzy_pg_data:/var/lib/postgresql/data
     healthcheck:
-      # This healthcheck is correct: it checks the service via the socket.
-      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U user -d eatzy_db"]
       interval: 5s
       timeout: 5s
-      retries: 20
-    #
-    # THE FIX (v1.30): This command forces Postgres to
-    # listen on all network interfaces (*), which enables
-    # the TCP/IP connection from 127.0.0.1.
-    #
-    command: postgres -c "listen_addresses=*"
+      retries: 10
 
   redis:
     image: redis:7-alpine
     container_name: eatzy_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./data/redis:/data
+    ports: ["6379:6379"]
+    volumes: 
+      - eatzy_redis_data:/data
+
+# Define the managed volumes
+volumes:
+  eatzy_pg_data:
+  eatzy_redis_data:
