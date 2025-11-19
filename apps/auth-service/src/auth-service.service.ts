@@ -1,46 +1,55 @@
 // Path: apps/auth-service/src/auth-service.service.ts
 
-import { Injectable, UnauthorizedException } from '@nestjs/common'; // FIX: Missing Injectable
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { JwtPayload } from '@app/shared';
-import { User } from '@app/shared/database/entities/user.entity'; // FIX: Correct path to shared User entity
-import { PaginatedResponse } from '@app/shared/types/pagination'; // FIX: Correct path to shared PaginatedResponse
+import { User } from '@app/shared/database/entities/user.entity';
+import { PaginatedResponse } from '@app/shared/types/pagination';
 import { LoginDto } from './dto/login.dto';
 import { AdminLoginDto } from './dto/admin-login.dto';
-import { ListUsersQueryDto } from './dto/list-users-query.dto'; // NEW IMPORT
+import { ListUsersQueryDto } from './dto/list-users-query.dto';
 
 @Injectable()
 export class AuthService {
-  // CRITICAL FIX: Ensures property is declared and matches @InjectRepository usage
-  constructor(
-    @InjectRepository(User) private readonly userRepository: Repository<User>,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(
+    @InjectRepository(User) private readonly userRepository: Repository<User>,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) { }
 
-  // Customer Login (Phone/PIN)
-  async validateUser(loginDto: LoginDto): Promise<User> {
-    const { phone, pin } = loginDto;
-    const user = await this.userRepository.findOne({ where: { phone } });
-    if (user && (await bcrypt.compare(pin, user.pin_hash))) {
-      if (!user.is_active) throw new UnauthorizedException('Inactive');
-      return user;
-    }
-    throw new UnauthorizedException('Invalid credentials');
-  }
+  // Customer Login (Phone/PIN)
+  async validateUser(loginDto: LoginDto): Promise<User> {
+    const { phone, pin } = loginDto;
+    const user = await this.userRepository.findOne({ where: { phone } });
+    if (user && (await bcrypt.compare(pin, user.pin_hash))) {
+      if (!user.is_active) throw new UnauthorizedException('Inactive');
+      return user;
+    }
+    throw new UnauthorizedException('Invalid credentials');
+  }
 
-  // Admin Login (Username/Password)
-  async validateAdmin(dto: AdminLoginDto): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { username: dto.username } });
-    if (user && user.role === 'admin' && (await bcrypt.compare(dto.password, user.pin_hash))) {
-      return user;
-    }
-    throw new UnauthorizedException('Invalid admin credentials');
-  }
+  // Admin Login (Username/Password)
+  async validateAdmin(dto: AdminLoginDto): Promise<User> {
+    console.log('Attempting admin login for:', dto.username);
+    const user = await this.userRepository.findOne({ where: { username: dto.username } });
+    console.log('User found:', user ? 'YES' : 'NO');
+
+    if (user) {
+      console.log('User role:', user.role);
+      // console.log('Hash:', user.pin_hash); 
+      const isMatch = await bcrypt.compare(dto.password, user.pin_hash);
+      console.log('Password match:', isMatch);
+    }
+
+    if (user && user.role === 'admin' && (await bcrypt.compare(dto.password, user.pin_hash))) {
+      return user;
+    }
+    throw new UnauthorizedException('Invalid admin credentials');
+  }
 
   /**
    * @method listUsers
@@ -78,12 +87,12 @@ export class AuthService {
     };
   }
 
-  async login(user: User): Promise<{ access_token: string }> {
-    const payload: JwtPayload = { 
-      userId: user.id, 
-      phone: user.phone || '', 
-      role: user.role 
-    };
-    return { access_token: this.jwtService.sign(payload) };
-  }
+  async login(user: User): Promise<{ access_token: string }> {
+    const payload: JwtPayload = {
+      userId: user.id,
+      phone: user.phone || '',
+      role: user.role
+    };
+    return { access_token: this.jwtService.sign(payload) };
+  }
 }
