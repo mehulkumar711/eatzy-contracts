@@ -9,53 +9,54 @@ const { Header, Sider, Content } = Layout;
 const { Text } = Typography;
 
 export default function AppLayout() {
-  const navigate = useNavigate();
-  const logout = useAuthStore((s) => s.logout);
-  const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+  const user = useAuthStore((s) => s.user);
 
   // Modular menu items for scalability
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/users', icon: <UserOutlined />, label: 'Users' },
     // Future expansion points
     { key: '/orders', icon: <UserOutlined />, label: 'Orders (TBD)', disabled: true },
-  ]
+  ];
 
-  return (
-    <Layout className="tw-min-h-screen">
-      <Sider theme="dark">
-        <div className="tw-h-8 tw-m-4 tw-flex tw-items-center tw-justify-center">
-            <Text className="tw-text-white tw-text-xl tw-font-extrabold">
-                EATZY <span className="tw-text-blue-500 tw-font-light">ADM</span>
-            </Text>
+  return (
+    <Layout className="tw-min-h-screen">
+      <Sider theme="dark">
+        <div className="tw-h-8 tw-m-4 tw-flex tw-items-center tw-justify-center">
+          <Text className="tw-text-white tw-text-xl tw-font-extrabold">
+            EATZY <span className="tw-text-blue-500 tw-font-light">ADM</span>
+          </Text>
         </div>
-        <Menu 
-            theme="dark" 
-            mode="inline" 
-            defaultSelectedKeys={['/dashboard']} 
-            items={menuItems} 
-            onSelect={({key}) => navigate(key)}
+        <Menu
+          theme="dark"
+          mode="inline"
+          defaultSelectedKeys={['/dashboard']}
+          items={menuItems}
+          onSelect={({ key }) => navigate(key)}
         />
-      </Sider>
-      <Layout>
-        <Header className="tw-bg-white tw-px-6 tw-flex tw-justify-end tw-items-center" style={{padding:0}}>
+      </Sider>
+      <Layout>
+        <Header className="tw-bg-white tw-px-6 tw-flex tw-justify-end tw-items-center" style={{ padding: 0 }}>
           <Space>
             <Text strong>Welcome, {user?.username || 'Admin'}</Text>
-            <Button 
-                icon={<LogoutOutlined />} 
-                type="text"
-                onClick={() => { 
-                    logout(); 
-                    navigate('/login'); // Should be redundant due to api.ts interceptor but acts as a fallback
-                }}
+            <Button
+              icon={<LogoutOutlined />}
+              type="text"
+              onClick={() => {
+                logout();
+                navigate('/login'); // Should be redundant due to api.ts interceptor but acts as a fallback
+              }}
             >
-                Logout
+              Logout
             </Button>
           </Space>
-        </Header>
-        <Content className="tw-m-6 tw-p-6 tw-bg-white tw-min-h-0">
-          <Outlet />
-        </Content>
-      </Layout>
-    </Layout>
-  );
+        </Header>
+        <Content className="tw-m-6 tw-p-6 tw-bg-white tw-min-h-0">
+          <Outlet />
+        </Content>
+      </Layout>
+    </Layout>
+  );
 }

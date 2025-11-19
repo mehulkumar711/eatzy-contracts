@@ -8,6 +8,7 @@ import RouteErrorBoundary from '@/components/RouteErrorBoundary';
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const OrdersPage = lazy(() => import('@/pages/OrdersPage'));
+const UsersManagementPage = lazy(() => import('@/pages/UsersManagementPage'));
 
 export const router = createBrowserRouter([
   // Public Route
@@ -22,7 +23,7 @@ export const router = createBrowserRouter([
     element: (
       // This is the authentication check that runs on all dashboard routes
       <ProtectedRoute>
-        <AppLayout /> 
+        <AppLayout />
       </ProtectedRoute>
     ),
     errorElement: <RouteErrorBoundary />,
@@ -39,6 +40,11 @@ export const router = createBrowserRouter([
       {
         path: 'orders',
         element: <OrdersPage />,
+        errorElement: <RouteErrorBoundary />,
+      },
+      {
+        path: 'users',
+        element: <UsersManagementPage />,
         errorElement: <RouteErrorBoundary />,
       },
     ],
